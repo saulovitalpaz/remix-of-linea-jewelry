@@ -1,0 +1,82 @@
+.adminContainer {
+    padding: 2rem 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: var(--font-clean);
+}
+
+.adminHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--light-grey);
+    padding-bottom: 1rem;
+}
+
+.adminHeader h1 {
+    font-family: var(--font-romantic);
+    font-size: 2.5rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 4rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-weight: 500;
+    color: var(--medium-grey);
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+    padding: 0.8rem;
+    border: 1px solid var(--light-grey);
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+.productList {
+    margin-top: 4rem;
+}
+
+.productTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.productTable th,
+.productTable td {
+    text-align: left;
+    padding: 1rem;
+    border-bottom: 1px solid var(--light-grey);
+}
+
+.productTable th {
+    color: var(--medium-grey);
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    background: var(--light-grey);
+    color: var(--medium-grey);
+}
+
+.badgeActive {
+    background: #E8F5E9;
+    color: #2E7D32;
+}

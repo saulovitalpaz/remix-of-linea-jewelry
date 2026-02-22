@@ -1,0 +1,148 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  position: relative;
+  height: 80vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--light-grey);
+}
+
+.heroImage {
+  object-fit: cover;
+  opacity: 0.6;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+  max-width: 800px;
+}
+
+.heroContent h1 {
+  font-family: var(--font-romantic);
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.heroContent p {
+  font-family: var(--font-clean);
+  font-size: 1.25rem;
+  color: var(--medium-grey);
+  margin-bottom: 2rem;
+}
+
+.header {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rem;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.logo {
+  object-fit: contain;
+}
+
+.nav {
+  display: flex;
+  gap: 2rem;
+  font-family: var(--font-clean);
+  font-weight: 500;
+  color: var(--medium-grey);
+}
+
+.nav a:hover {
+  color: var(--primary-gold);
+}
+
+.section {
+  padding: 6rem 4rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-romantic);
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.productLines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.lineCard {
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--light-grey);
+  transition: transform 0.3s ease;
+}
+
+.lineCard:hover {
+  transform: translateY(-10px);
+}
+
+.cardContent {
+  padding: 2rem;
+}
+
+.cardContent h3 {
+  font-family: var(--font-romantic);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.footer {
+  background: var(--light-grey);
+  padding: 4rem;
+  text-align: center;
+  font-family: var(--font-clean);
+  color: var(--medium-grey);
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 2rem;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .heroContent h1 {
+    font-size: 2.5rem;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .logo {
+    filter: invert();
+  }
+
+  .page {
+    --background: #000;
+    --foreground: #000;
+
+    --text-primary: #ededed;
+
+    --button-primary-hover: #ccc;
+    --button-secondary-hover: #1a1a1a;
+    --button-secondary-border: #1a1a1a;
+  }
+}
