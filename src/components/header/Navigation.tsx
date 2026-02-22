@@ -60,7 +60,7 @@ const Navigation = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar produtos..."
-                className="text-sm border-b border-gray-300 outline-none px-1 py-0.5 w-28 md:w-40 focus:border-[#C5A028] transition-colors bg-transparent text-gray-800 placeholder:text-gray-400"
+                className="text-base border-b border-gray-300 outline-none px-2 py-1 w-36 sm:w-48 lg:w-64 focus:border-[#C5A028] transition-colors bg-transparent text-gray-800 placeholder:text-gray-400"
               />
               <button type="button" onClick={() => setSearchOpen(false)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">&times;</button>
             </form>
@@ -100,7 +100,7 @@ const Navigation = () => {
             <Link
               key={cat.slug}
               to={`/category/${cat.slug}`}
-              className="block text-base text-gray-700 hover:text-yellow-700 transition-colors py-3 border-b border-gray-50"
+              className="block text-lg font-medium text-gray-800 hover:text-[#C5A028] transition-colors py-4 border-b border-gray-100/50"
               onClick={() => setMobileMenuOpen(false)}
             >
               {cat.label}

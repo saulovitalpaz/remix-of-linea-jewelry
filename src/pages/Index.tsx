@@ -52,34 +52,34 @@ const Index = () => {
         {/* ─── HERO ─── */}
         <section
           id="inicio"
-          className="relative w-full flex items-center justify-center px-4 md:px-6 py-10 md:py-14"
+          className="relative w-full flex items-center justify-center px-4 md:px-6 py-12 md:py-16"
         >
           <div className="w-full max-w-screen-xl mx-auto flex flex-col items-center text-center">
             {/* Logo */}
-            <div className="mb-6 md:mb-10 animate-fade-in">
+            <div className="mb-8 md:mb-12 animate-fade-in">
               <img
                 src="/Logo 1.png"
                 alt="Chique Detalhes"
-                className="h-28 sm:h-40 md:h-56 lg:h-64 w-auto object-contain mx-auto"
+                className="h-32 sm:h-44 md:h-56 lg:h-64 w-auto object-contain mx-auto transition-transform duration-500 hover:scale-105"
               />
             </div>
             {/* Tagline */}
-            <p className="text-base sm:text-lg md:text-xl text-gray-500 mb-8 md:mb-10 font-light leading-relaxed max-w-md md:max-w-lg mx-auto px-2">
-              Onde o romantismo encontra o minimalismo.<br />
-              Descubra nossa curadoria exclusiva de acessórios infantis e semijoias premium.
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-500 mb-10 md:mb-12 font-light leading-relaxed max-w-[90%] md:max-w-xl mx-auto">
+              Onde o romantismo encontra o minimalismo.<br className="hidden sm:block" />
+              Descubra nossa curadoria exclusiva.
             </p>
             {/* CTA */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 w-full sm:w-auto px-4 sm:px-0">
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-2 sm:px-0">
               <a
                 href="#produtos"
-                className="romantic-button text-white font-semibold px-8 md:px-12 py-3.5 md:py-4 rounded-full transition-all duration-300 shadow-xl hover:scale-105 text-center text-sm md:text-base"
+                className="romantic-button w-full sm:w-auto text-white font-bold px-8 md:px-12 py-4 md:py-5 rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 text-center text-base md:text-lg tracking-wide"
               >
                 Explorar Coleções
               </a>
               <a
                 href="#nossa-loja"
-                className="font-semibold px-8 md:px-12 py-3.5 md:py-4 rounded-full transition-all duration-300 text-center text-sm md:text-base"
-                style={{ border: '2px solid rgba(197,160,40,0.25)', color: '#C5A028' }}
+                className="w-full sm:w-auto font-bold px-8 md:px-12 py-4 md:py-5 rounded-2xl transition-all duration-300 text-center text-base md:text-lg bg-white hover:bg-yellow-50/50"
+                style={{ border: '2px solid rgba(197,160,40,0.3)', color: '#b38d1e' }}
               >
                 Nossa Loja Física
               </a>
@@ -106,13 +106,16 @@ const Index = () => {
                 to={`/category/${cat.slug}`}
                 className="group relative overflow-hidden bg-white/10 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-10 hover:shadow-2xl transition-all duration-500 flex flex-col border border-white/20"
               >
-                <div className="mb-4 md:mb-8 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
-                  <span className="text-3xl md:text-5xl">{cat.emoji}</span>
+                <div className="mb-4 md:mb-8 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500 flex justify-between items-start">
+                  <span className="text-4xl md:text-5xl bg-white/50 w-16 h-16 md:w-20 md:h-20 flex items-center justify-center rounded-2xl shadow-sm">{cat.emoji}</span>
+                  <div className="w-8 h-8 rounded-full bg-white/40 flex items-center justify-center group-hover:bg-[#C5A028] group-hover:text-white transition-colors">
+                    <span className="text-sm">→</span>
+                  </div>
                 </div>
-                <h3 className="text-lg md:text-2xl font-bold text-gray-900 group-hover:text-yellow-700 transition-colors mb-2 md:mb-3">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-[#b38d1e] transition-colors mb-2 md:mb-3">
                   {cat.label}
                 </h3>
-                <p className="text-gray-500 font-light leading-relaxed mb-4 md:mb-6 text-sm md:text-base">
+                <p className="text-gray-500 font-light leading-relaxed mb-4 md:mb-6 text-sm md:text-base line-clamp-2">
                   {cat.description}
                 </p>
                 <div className="mt-auto flex items-center text-xs md:text-sm font-bold group-hover:translate-x-2 transition-transform duration-300" style={{ color: '#C5A028' }}>
@@ -129,18 +132,18 @@ const Index = () => {
             <div className="max-w-screen-xl mx-auto">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 md:mb-12 gap-3">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">
                     Destaques da Temporada
                   </h2>
-                  <p className="text-gray-400 font-light text-sm md:text-base">As peças mais amadas de nossa coleção.</p>
+                  <p className="text-gray-500 font-light text-base md:text-lg">As peças mais amadas de nossa coleção.</p>
                 </div>
                 <Link
                   to="/category/all"
-                  className="group flex items-center text-xs md:text-sm font-bold"
+                  className="group flex items-center justify-center w-full sm:w-auto bg-yellow-50 sm:bg-transparent py-4 sm:py-2 rounded-xl text-sm md:text-base font-bold transition-all hover:bg-yellow-100/50"
                   style={{ color: '#C5A028' }}
                 >
                   VER TODO O CATÁLOGO
-                  <span className="ml-2 group-hover:translate-x-1 transition-transform">→</span>
+                  <span className="ml-2 group-hover:translate-x-2 transition-transform">→</span>
                 </Link>
               </div>
 
@@ -158,14 +161,14 @@ const Index = () => {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                     </div>
-                    <div className="px-0.5 md:px-1 text-center">
-                      <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] mb-1 md:mb-2" style={{ color: '#C5A028' }}>
+                    <div className="p-3 bg-white/50 backdrop-blur-sm rounded-xl mt-[-10px] relative z-10 mx-2 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-white">
+                      <p className="text-xs md:text-xs font-bold uppercase tracking-[0.2em] mb-1.5" style={{ color: '#C5A028' }}>
                         {CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category}
                       </p>
-                      <h3 className="text-xs sm:text-sm md:text-base font-medium text-gray-800 leading-tight mb-1 md:mb-2 group-hover:text-yellow-700 transition-colors">
+                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-800 leading-tight mb-2 group-hover:text-[#b38d1e] transition-colors line-clamp-2">
                         {product.name}
                       </h3>
-                      <p className="text-sm md:text-lg font-bold text-gray-900">
+                      <p className="text-base sm:text-lg md:text-xl font-bold text-gray-900">
                         R$ {product.price.toFixed(2)}
                       </p>
                     </div>
@@ -228,7 +231,7 @@ const Index = () => {
 
             {/* Map */}
             <div className="lg:w-1/2 w-full order-1 lg:order-2">
-              <div className="aspect-video lg:aspect-square w-full rounded-2xl md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 md:border-8 border-white/50 relative">
+              <div className="aspect-square sm:aspect-video lg:aspect-square w-full rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 md:border-8 border-white/50 relative group">
                 <iframe
                   src="https://maps.google.com/maps?q=Av.%20Juracy%20Magalh%C3%A3es,%203340%20-%20Vit%C3%B3ria%20da%20Conquista&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   width="100%"
@@ -264,7 +267,7 @@ const Index = () => {
       </main>
 
       <Footer />
-    </div>
+    </div >
   );
 };
 
