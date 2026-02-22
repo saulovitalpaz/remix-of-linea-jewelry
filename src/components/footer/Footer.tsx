@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="w-full bg-white text-black pt-8 pb-2 px-6 border-t border-[#e5e5e5] mt-48">
+    <footer className="w-full bg-white text-black pt-8 pb-2 px-6 border-t border-[#e5e5e5]">
       <div className="">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-8">
           {/* Brand - Left side */}
@@ -76,6 +76,9 @@ const Footer = () => {
             </Link>
             <Link to="/terms" className="text-sm font-light text-black hover:text-black/70 transition-colors">
               Termos de Uso
+            </Link>
+            <Link to="/admin" className="text-sm font-light text-black/40 hover:text-yellow-700 transition-colors">
+              Painel Admin
             </Link>
           </div>
         </div>

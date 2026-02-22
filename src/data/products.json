@@ -1,50 +1,50 @@
 [
     {
         "id": "1",
-        "name": "Bolsa Infantil Rosa",
-        "price": 89.90,
-        "category": "infantil",
-        "imageUrl": "/quioske.jpeg",
-        "description": "Linda bolsa com glitter para crianças. Feita com materiais de qualidade, ideal para as pequenas que adoram estilo."
+        "name": "Bracelete Arcus Gold",
+        "price": 189.90,
+        "category": "semijoias",
+        "imageUrl": "/arcus-bracelet.png",
+        "description": "Bracelete elegante com acabamento em ouro, design minimalista e moderno."
     },
     {
         "id": "2",
-        "name": "Brinco de Pérola",
-        "price": 45.00,
+        "name": "Coleção Brincos Pérola",
+        "price": 145.00,
         "category": "semijoias",
-        "imageUrl": "/quioske.jpeg",
-        "description": "Clássico e elegante. Brinco de pérola sintética com haste em metal dourado. Ideal para uso no dia a dia ou ocasiões especiais."
+        "imageUrl": "/earrings-collection.png",
+        "description": "Mix de brincos clássicos de pérola para composições sofisticadas."
     },
     {
         "id": "3",
-        "name": "Batom Coral Premium",
-        "price": 32.00,
-        "category": "make",
-        "imageUrl": "/quioske.jpeg",
-        "description": "Batom de longa duração na cor coral vibrante. Fórmula hidratante e pigmentação intensa."
+        "name": "Anéis Minimalistas Prata",
+        "price": 132.00,
+        "category": "semijoias",
+        "imageUrl": "/rings-collection.png",
+        "description": "Conjunto de anéis delicados com design clean para uso diário."
     },
     {
         "id": "4",
-        "name": "Bolsa Mini Feminina",
-        "price": 119.90,
-        "category": "bolsas",
-        "imageUrl": "/quioske.jpeg",
-        "description": "Mini bolsa feminina com alça tiracolo. Estilo moderno e delicado, perfeito para sair com praticidade."
+        "name": "Bracelete Span Premium",
+        "price": 219.90,
+        "category": "semijoias",
+        "imageUrl": "/span-bracelet.png",
+        "description": "Peça de destaque com textura exclusiva, folheado a ouro 18k."
     },
     {
         "id": "5",
-        "name": "Colar Dourado Folheado",
-        "price": 68.00,
-        "category": "semijoias",
+        "name": "Bolsa Infantil Arcus",
+        "price": 89.90,
+        "category": "infantil",
         "imageUrl": "/quioske.jpeg",
-        "description": "Colar delicado folheado a ouro 18k. Perfeito para complementar qualquer look do dia a dia."
+        "description": "Bolsa charmosa para crianças, inspirada na nossa linha premium."
     },
     {
         "id": "6",
-        "name": "Kit Maquiagem Básico",
-        "price": 87.50,
+        "name": "Kit Make Glow",
+        "price": 157.50,
         "category": "make",
-        "imageUrl": "/quioske.jpeg",
-        "description": "Kit completo com base, blush e iluminador para uma make natural e duradoura."
+        "imageUrl": "/Gemini_Generated_Image_h9ueekh9ueekh9ue.png",
+        "description": "Kit completo para uma maquiagem iluminada e natural."
     }
 ]
