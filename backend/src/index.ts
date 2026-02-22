@@ -15,7 +15,16 @@ const upload = multer();
 const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        'https://frontend-production-eab9.up.railway.app',
+        'https://chiquedetalhes.com.br',
+        'http://localhost:5173'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+}));
 app.use(express.json());
 
 // --- Authentication Middleware ---
