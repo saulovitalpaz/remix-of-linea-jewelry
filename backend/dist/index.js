@@ -59,7 +59,7 @@ app.post('/api/categories', authenticateAdmin, async (req, res) => {
 });
 // --- Product Routes ---
 app.get('/api/products', async (req, res) => {
-    const { categorySlug } = req.query;
+    const categorySlug = req.query.categorySlug;
     const products = await prisma.product.findMany({
         where: categorySlug ? { category: { slug: categorySlug } } : {},
         include: { category: true }
@@ -67,7 +67,7 @@ app.get('/api/products', async (req, res) => {
     res.json(products);
 });
 app.post('/api/products', authenticateAdmin, upload.single('image'), async (req, res) => {
-    const { name, price, description, categoryId } = req.body;
+    const { name, price, description, categoryId, stock } = req.body;
     const file = req.file;
     try {
         let imageUrl = '';
@@ -94,6 +94,7 @@ app.post('/api/products', authenticateAdmin, upload.single('image'), async (req,
                 price: parseFloat(price),
                 description,
                 imageUrl,
+                stock: stock ? parseInt(stock, 10) : 0,
                 categoryId: actualCategoryId
             }
         });
@@ -102,6 +103,36 @@ app.post('/api/products', authenticateAdmin, upload.single('image'), async (req,
     catch (err) {
         console.error(err);
         res.status(400).json({ error: 'Product creation failed' });
+    }
+});
+// Update Product (including stock)
+app.put('/api/products/:id', authenticateAdmin, upload.single('image'), async (req, res) => {
+    const { name, price, description, categoryId, stock } = req.body;
+    const file = req.file;
+    try {
+        const updateData = {};
+        if (name !== undefined)
+            updateData.name = name;
+        if (price !== undefined)
+            updateData.price = parseFloat(price);
+        if (description !== undefined)
+            updateData.description = description;
+        if (stock !== undefined)
+            updateData.stock = parseInt(stock, 10);
+        if (categoryId !== undefined)
+            updateData.categoryId = categoryId;
+        if (file) {
+            updateData.imageUrl = await uploadToCloudinary(file.buffer);
+        }
+        const product = await prisma.product.update({
+            where: { id: req.params.id },
+            data: updateData
+        });
+        res.json(product);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(400).json({ error: 'Product update failed' });
     }
 });
 app.get('/api/products/:id', async (req, res) => {
@@ -117,7 +148,120 @@ app.get('/api/products/:id', async (req, res) => {
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Chique Detalhes API is running' });
 });
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// --- Daily Sales / Caixas Routes ---
+app.post('/api/sales/close-day', authenticateAdmin, async (req, res) => {
+    const { itemsSoldData, notes } = req.body; // Array of { productId, quantity, priceAtSale }
+    try {
+        // Run as a transaction to ensure all stock is updated or none
+        const result = await prisma.$transaction(async (tx) => {
+            let totalRevenue = 0;
+            let totalItemsSold = 0;
+            for (const item of itemsSoldData) {
+                // Update product stock and sales count
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: {
+                        stock: { decrement: item.quantity },
+                        salesCount: { increment: item.quantity }
+                    }
+                });
+                totalRevenue += (item.priceAtSale * item.quantity);
+                totalItemsSold += item.quantity;
+            }
+            // Create daily sales record
+            const dailySales = await tx.dailySales.create({
+                data: {
+                    totalRevenue,
+                    itemsSold: totalItemsSold,
+                    notes
+                }
+            });
+            return dailySales;
+        });
+        res.status(201).json(result);
+    }
+    catch (error) {
+        console.error("Error closing day:", error);
+        res.status(500).json({ error: 'Failed to process daily sales.' });
+    }
+});
+// --- Marketing Popup Routes ---
+app.get('/api/popup/active', async (req, res) => {
+    const popup = await prisma.marketingPopup.findFirst({
+        where: { active: true },
+        orderBy: { updatedAt: 'desc' }
+    });
+    res.json(popup || null);
+});
+app.get('/api/popup', authenticateAdmin, async (req, res) => {
+    const popups = await prisma.marketingPopup.findMany({
+        orderBy: { createdAt: 'desc' }
+    });
+    res.json(popups);
+});
+app.post('/api/popup', authenticateAdmin, upload.single('image'), async (req, res) => {
+    const file = req.file;
+    if (!file)
+        return res.status(400).json({ error: 'Image is required' });
+    try {
+        const imageUrl = await uploadToCloudinary(file.buffer);
+        // Deactivate all others first
+        await prisma.marketingPopup.updateMany({ data: { active: false } });
+        const popup = await prisma.marketingPopup.create({
+            data: { imageUrl, active: true }
+        });
+        res.status(201).json(popup);
+    }
+    catch (err) {
+        res.status(500).json({ error: 'Failed to create popup' });
+    }
+});
+app.put('/api/popup/:id/toggle', authenticateAdmin, async (req, res) => {
+    try {
+        const { active } = req.body;
+        if (active) {
+            // If activating this one, deactivate all others first
+            await prisma.marketingPopup.updateMany({ data: { active: false } });
+        }
+        const popup = await prisma.marketingPopup.update({
+            where: { id: req.params.id },
+            data: { active }
+        });
+        res.json(popup);
+    }
+    catch (err) {
+        res.status(500).json({ error: 'Failed to toggle popup' });
+    }
+});
+app.delete('/api/popup/:id', authenticateAdmin, async (req, res) => {
+    try {
+        await prisma.marketingPopup.delete({ where: { id: req.params.id } });
+        res.status(204).send();
+    }
+    catch (err) {
+        res.status(500).json({ error: 'Failed to delete popup' });
+    }
+});
+// --- Seed Admin ---
+async function seedAdmin() {
+    const email = 'barbara@chiquedetalhes.com.br';
+    try {
+        const existing = await prisma.adminUser.findUnique({ where: { email } });
+        if (!existing) {
+            const passwordHash = await bcrypt.hash('Beijinho2023', 10);
+            await prisma.adminUser.create({
+                data: { email, passwordHash }
+            });
+            console.log('Admin user Bárbara Paz seeded successfully.');
+        }
+    }
+    catch (e) {
+        console.error('Error seeding admin user:', e);
+    }
+}
+seedAdmin().then(() => {
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
 });
 //# sourceMappingURL=index.js.map
