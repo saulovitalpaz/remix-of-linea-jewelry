@@ -13,15 +13,16 @@ const Footer = () => {
             </p>
 
             {/* Contact Information */}
-            <div className="space-y-2 text-sm font-light text-black/70">
+            <div className="space-y-4 text-sm font-light text-black/70">
               <div>
                 <p className="font-normal text-black mb-1">Nosso Quiosque</p>
-                <p>Shopping Center Novo Hamburgo</p>
-                <p>Novo Hamburgo, RS</p>
+                <p>Av. Juracy Magalhães, 3340 - Quiosque 115</p>
+                <p>Boa Vista, Vitória da Conquista - BA</p>
+                <p>CEP: 45055-900</p>
               </div>
               <div>
-                <p className="font-normal text-black mb-1 mt-3">Contato</p>
-                <p>+55 (51) 99999-9999</p>
+                <p className="font-normal text-black mb-1">Contato</p>
+                <p>(77) 98859-0306</p>
                 <p>contato@chiquedetalhes.com.br</p>
               </div>
             </div>
@@ -57,7 +58,7 @@ const Footer = () => {
               <ul className="space-y-2">
                 <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-sm font-light text-black/70 hover:text-black transition-colors">Instagram</a></li>
                 <li><a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-sm font-light text-black/70 hover:text-black transition-colors">Facebook</a></li>
-                <li><a href="https://wa.me/5551999999999" target="_blank" rel="noopener noreferrer" className="text-sm font-light text-black/70 hover:text-black transition-colors">WhatsApp</a></li>
+                <li><a href="https://wa.me/5577988590306" target="_blank" rel="noopener noreferrer" className="text-sm font-light text-black/70 hover:text-black transition-colors">WhatsApp</a></li>
               </ul>
             </div>
           </div>
@@ -67,9 +68,12 @@ const Footer = () => {
       {/* Bottom section - edge to edge separator */}
       <div className="border-t border-[#e5e5e5] -mx-6 px-6 pt-2">
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm font-light text-black mb-1 md:mb-0">
-            © 2024 Chique Detalhes. Todos os direitos reservados.
-          </p>
+          <div className="text-sm font-light text-black mb-2 md:mb-0">
+            <p>© 2024 Chique Detalhes. Todos os direitos reservados.</p>
+            <p className="text-[10px] opacity-60 mt-1 uppercase">
+              LOJA DE VARIEDADES FONSECA LTDA | CNPJ: 64.469.155/0001-54
+            </p>
+          </div>
           <div className="flex space-x-6">
             <Link to="/privacy" className="text-sm font-light text-black hover:text-black/70 transition-colors">
               Privacidade

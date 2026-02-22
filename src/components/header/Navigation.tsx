@@ -24,8 +24,8 @@ const Navigation = () => {
   };
 
   return (
-    <header className="w-full sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-      <div className="max-w-screen-xl mx-auto px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-2 md:gap-4">
+    <nav className="w-full max-w-screen-xl mx-auto bg-white/40 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 rounded-2xl md:rounded-[2rem] transition-all duration-300">
+      <div className="px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-2 md:gap-4">
 
         {/* Left — Logo 2 Symbol & Desktop Nav */}
         <div className="flex items-center gap-3 md:gap-6 shrink-0">
@@ -41,9 +41,10 @@ const Navigation = () => {
               <Link
                 key={cat.slug}
                 to={`/category/${cat.slug}`}
-                className="text-sm font-light text-gray-600 hover:text-yellow-700 transition-colors whitespace-nowrap"
+                className="group relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap duration-300"
               >
                 {cat.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-[#C5A028] to-[#E6C878] transition-all duration-300 group-hover:w-full rounded-full"></span>
               </Link>
             ))}
           </nav>
@@ -59,7 +60,7 @@ const Navigation = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar produtos..."
-                className="text-sm border-b border-gray-300 outline-none px-1 py-0.5 w-28 md:w-40 focus:border-yellow-500 transition-colors bg-transparent"
+                className="text-sm border-b border-gray-300 outline-none px-1 py-0.5 w-28 md:w-40 focus:border-[#C5A028] transition-colors bg-transparent text-gray-800 placeholder:text-gray-400"
               />
               <button type="button" onClick={() => setSearchOpen(false)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">&times;</button>
             </form>
@@ -94,7 +95,7 @@ const Navigation = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-6 py-5 space-y-1 shadow-lg">
+        <div className="md:hidden bg-white/80 backdrop-blur-xl border-t border-white/40 px-6 py-5 space-y-1 rounded-b-2xl md:rounded-b-[2rem]">
           {categories.map((cat) => (
             <Link
               key={cat.slug}
@@ -108,7 +109,7 @@ const Navigation = () => {
 
         </div>
       )}
-    </header>
+    </nav>
   );
 };
 

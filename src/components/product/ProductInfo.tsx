@@ -24,7 +24,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
   const buyViaWhatsApp = () => {
     const message = encodeURIComponent(`Olá! Gostaria de encomendar ${quantity}x ${product.name} (R$ ${product.price.toFixed(2)} cada). Total: R$ ${(product.price * quantity).toFixed(2)}.`);
-    window.open(`https://wa.me/5551999999999?text=${message}`, '_blank');
+    window.open(`https://wa.me/5577988590306?text=${message}`, '_blank');
   };
 
   return (

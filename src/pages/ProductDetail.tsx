@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Header from "../components/header/Header";
@@ -21,7 +22,27 @@ import { ProductService } from "../services/ProductService";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = id ? ProductService.getProductById(id) : null;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      ProductService.getProductById(id).then(p => {
+        setProduct(p || null);
+        setIsLoading(false);
+      });
+    } else {
+      setIsLoading(false);
+    }
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Carregando produto...</div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

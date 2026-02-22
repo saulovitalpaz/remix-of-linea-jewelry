@@ -30,11 +30,11 @@ const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    setProducts(ProductService.getProducts());
+    ProductService.getProducts().then(setProducts);
   }, []);
 
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-yellow-100 selection:text-yellow-900 relative">
+    <div className="min-h-screen bg-transparent font-sans selection:bg-yellow-100 selection:text-yellow-900 relative">
 
       {/* ─── GLOBAL AMBIENT EDGE GRADIENTS (inline styles for reliability) ─── */}
       <div
@@ -53,7 +53,6 @@ const Index = () => {
         <section
           id="inicio"
           className="relative w-full flex items-center justify-center px-4 md:px-6 py-10 md:py-14"
-          style={{ background: 'linear-gradient(to bottom, rgba(197,160,40,0.12) 0%, rgba(230,200,120,0.06) 40%, #ffffff 100%)' }}
         >
           <div className="w-full max-w-screen-xl mx-auto flex flex-col items-center text-center">
             {/* Logo */}
@@ -105,7 +104,7 @@ const Index = () => {
               <Link
                 key={cat.slug}
                 to={`/category/${cat.slug}`}
-                className="group relative overflow-hidden bg-gray-50 rounded-2xl md:rounded-3xl p-6 md:p-10 hover:shadow-2xl transition-all duration-500 flex flex-col border border-gray-100"
+                className="group relative overflow-hidden bg-white/10 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-10 hover:shadow-2xl transition-all duration-500 flex flex-col border border-white/20"
               >
                 <div className="mb-4 md:mb-8 transform group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
                   <span className="text-3xl md:text-5xl">{cat.emoji}</span>
@@ -126,7 +125,7 @@ const Index = () => {
 
         {/* ─── NOVIDADES ─── */}
         {products.length > 0 && (
-          <section className="py-14 md:py-24 px-4 md:px-8 bg-gray-50 border-y border-gray-100">
+          <section className="py-14 md:py-24 px-4 md:px-8 border-y border-white/10">
             <div className="max-w-screen-xl mx-auto">
               <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 md:mb-12 gap-3">
                 <div>
@@ -184,10 +183,10 @@ const Index = () => {
             <div className="lg:w-1/2 space-y-6 md:space-y-8 animate-fade-in order-2 lg:order-1">
               <div className="space-y-3 md:space-y-4 text-center lg:text-left">
                 <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900">
-                  Visite Nossa <br /> <span className="gold-text">Loja Física</span>
+                  Visite Nosso <br /> <span className="gold-text">Quiosque Físico</span>
                 </h2>
                 <p className="text-gray-500 font-light text-sm md:text-lg">
-                  Sinta a qualidade e o brilho de perto em nosso quiosque climatizado no Shopping Center Novo Hamburgo.
+                  Sinta a qualidade e o brilho de perto em nosso espaço exclusivo em Vitória da Conquista.
                 </p>
               </div>
 
@@ -198,9 +197,9 @@ const Index = () => {
                   </div>
                   <h4 className="font-bold mb-1 text-center lg:text-left uppercase text-xs tracking-widest" style={{ color: '#C5A028' }}>Localização</h4>
                   <p className="text-gray-500 text-sm leading-relaxed text-center lg:text-left">
-                    Shopping Center Novo Hamburgo<br />
-                    Joaquim Nabuco, 1205<br />
-                    Novo Hamburgo - RS
+                    Av. Juracy Magalhães, 3340<br />
+                    Quiosque 115 - Boa Vista<br />
+                    Vitória da Conquista - BA
                   </p>
                 </div>
                 <div>
@@ -217,7 +216,7 @@ const Index = () => {
 
               <div className="flex justify-center lg:justify-start">
                 <a
-                  href="https://www.google.com/maps/dir/?api=1&destination=Shopping+Center+Novo+Hamburgo"
+                  href="https://www.google.com/maps/dir/?api=1&destination=Av.+Juracy+Magalhães,+3340+-+Boa+Vista,+Vitória+da+Conquista+-+BA"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-gray-900 text-white font-bold px-6 md:px-8 py-3 md:py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-lg text-sm md:text-base"
@@ -229,9 +228,9 @@ const Index = () => {
 
             {/* Map */}
             <div className="lg:w-1/2 w-full order-1 lg:order-2">
-              <div className="aspect-video lg:aspect-square w-full rounded-2xl md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 md:border-8 border-white relative">
+              <div className="aspect-video lg:aspect-square w-full rounded-2xl md:rounded-[2.5rem] overflow-hidden shadow-2xl border-4 md:border-8 border-white/50 relative">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3467.485123456789!2d-51.127654!3d-29.683412!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9519426f8b1c4b1d%3A0x6b8b8b8b8b8b8b8b!2sShopping%20Center%20Novo%20Hamburgo!5e0!3m2!1spt-BR!2sbr!4v1700000000000!5m2!1spt-BR!2sbr"
+                  src="https://maps.google.com/maps?q=Av.%20Juracy%20Magalh%C3%A3es,%203340%20-%20Vit%C3%B3ria%20da%20Conquista&t=&z=15&ie=UTF8&iwloc=&output=embed"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

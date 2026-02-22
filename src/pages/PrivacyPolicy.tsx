@@ -10,7 +10,7 @@ const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="pt-6">
         <div className="max-w-4xl mx-auto px-6 py-12">
           <header className="mb-12 text-center">
@@ -41,7 +41,7 @@ const PrivacyPolicy = () => {
                     <li>Account preferences and communication settings</li>
                   </ul>
                 </div>
-                
+
                 <div>
                   <h3 className="text-xl font-light text-foreground mb-2">Usage Information</h3>
                   <p className="text-muted-foreground leading-relaxed">
@@ -122,14 +122,14 @@ const PrivacyPolicy = () => {
               </p>
               <div className="mt-4 text-muted-foreground">
                 <p>Email: privacy@lineajewelry.com</p>
-                <p>Phone: +1 (212) 555-0123</p>
-                <p>Address: 123 Madison Avenue, New York, NY 10016</p>
+                <p>Phone: (77) 98859-0306</p>
+                <p>Address: Av. Juracy Magalhães, 3340 - Quiosque 115, Boa Vista, Vitória da Conquista - BA</p>
               </div>
             </section>
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

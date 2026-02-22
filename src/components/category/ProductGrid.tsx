@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import Pagination from "./Pagination";
@@ -11,10 +12,20 @@ interface ProductGridProps {
 }
 
 const ProductGrid = ({ category }: ProductGridProps) => {
-  const allProducts = ProductService.getProducts();
-  const filteredProducts = category && category !== 'all'
-    ? allProducts.filter(p => p.category.toLowerCase() === category.toLowerCase())
-    : allProducts;
+  const [products, setProducts] = (import.meta.env.SSR ? [productsData as Product[], () => { }] : useState<Product[]>([])) as [Product[], React.Dispatch<React.SetStateAction<Product[]>>];
+  const [isLoading, setIsLoading] = useState(true);
+
+  (import.meta.env.SSR ? () => { } : useEffect)(() => {
+    ProductService.getProducts().then(allProducts => {
+      const filtered = category && category !== 'all'
+        ? allProducts.filter(p => p.category.toLowerCase() === category.toLowerCase())
+        : allProducts;
+      setProducts(filtered);
+      setIsLoading(false);
+    });
+  }, [category]);
+
+  const filteredProducts = products;
 
   return (
     <section className="w-full px-6 mb-16 animate-fade-in">

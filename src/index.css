@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
+  --background: #FDFBF7;
   --foreground: #1A1A1A;
   --primary-gold: #C5A028;
   --secondary-gold: #A6821F;
   --accent-gold: #E6C878;
   --light-grey: #F9F9F9;
   --medium-grey: #666666;
-  --soft-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  --soft-shadow: 0 10px 40px -10px rgba(197, 160, 40, 0.15);
   --gold-gradient: linear-gradient(135deg, #C5A028 0%, #E6C878 50%, #C5A028 100%);
 }
 
@@ -24,6 +24,11 @@ body {
   font-family: 'Montserrat', sans-serif;
   color: var(--foreground);
   background-color: var(--background);
+  background-image:
+    radial-gradient(at 0% 0%, hsla(45, 80%, 95%, 0.6) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(40, 60%, 98%, 1) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, hsla(45, 90%, 92%, 0.4) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
 h1,
