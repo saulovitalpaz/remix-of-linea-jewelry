@@ -8,8 +8,8 @@ import ProductGrid from "../components/category/ProductGrid";
 
 const Category = () => {
   const { category } = useParams();
-  const [searchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [itemCount, setItemCount] = useState(0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -23,10 +23,13 @@ const Category = () => {
         <FilterSortBar
           filtersOpen={filtersOpen}
           setFiltersOpen={setFiltersOpen}
-          itemCount={24}
+          itemCount={itemCount}
         />
 
-        <ProductGrid category={category} />
+        <ProductGrid
+          category={category}
+          onLoad={(count) => setItemCount(count)}
+        />
       </main>
 
       <Footer />

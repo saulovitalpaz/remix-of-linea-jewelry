@@ -28,9 +28,9 @@ interface FilterSortBarProps {
 const FilterSortBar = ({ filtersOpen, setFiltersOpen, itemCount }: FilterSortBarProps) => {
   const [sortBy, setSortBy] = useState("featured");
 
-  const categories = ["Earrings", "Bracelets", "Rings", "Necklaces"];
-  const priceRanges = ["Under €1,000", "€1,000 - €2,000", "€2,000 - €3,000", "Over €3,000"];
-  const materials = ["Gold", "Silver", "Rose Gold", "Platinum"];
+  const categories = ["Linha Infantil", "Semijoias", "Beleza & Make", "Bolsas"];
+  const priceRanges = ["Até R$ 50", "R$ 50 - R$ 150", "R$ 150 - R$ 300", "Acima de R$ 300"];
+  const materials = ["Ouro 18k", "Prata 925", "Banhado a Ouro", "Aço Inoxidável"];
 
   return (
     <>
@@ -39,12 +39,12 @@ const FilterSortBar = ({ filtersOpen, setFiltersOpen, itemCount }: FilterSortBar
           <p className="text-sm font-light text-muted-foreground">
             {itemCount} items
           </p>
-          
+
           <div className="flex items-center gap-4">
             <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
               <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   className="font-light hover:bg-transparent"
                 >
@@ -55,7 +55,7 @@ const FilterSortBar = ({ filtersOpen, setFiltersOpen, itemCount }: FilterSortBar
                 <SheetHeader className="mb-6 border-b border-border pb-4">
                   <SheetTitle className="text-lg font-light">Filters</SheetTitle>
                 </SheetHeader>
-                
+
                 <div className="space-y-8">
                   {/* Category Filter */}
                   <div>

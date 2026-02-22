@@ -12,7 +12,19 @@ const Index = () => {
 
   useEffect(() => {
     ProductService.getProducts().then(setProducts);
-    ProductService.getCategories().then(setCategories);
+    ProductService.getCategories().then(data => {
+      if (data && data.length > 0) {
+        setCategories(data);
+      } else {
+        // Fallback for empty database
+        setCategories([
+          { id: '1', name: 'Linha Infantil', slug: 'infantil', emoji: '🎀', description: 'Bolsas e acessórios delicados para as pequenas brilharem com doçura.' },
+          { id: '2', name: 'Semijoias', slug: 'semijoias', emoji: '💍', description: 'Elegância eterna em peças selecionadas com o mais alto padrão de brilho.' },
+          { id: '3', name: 'Beleza & Make', slug: 'make', emoji: '💄', description: 'Realce sua beleza natural com produtos essenciais de alta performance.' },
+          { id: '4', name: 'Bolsas', slug: 'bolsas', emoji: '👜', description: 'Praticidade e estilo para o seu dia a dia com modelos exclusivos.' }
+        ]);
+      }
+    });
   }, []);
 
   return (
@@ -111,26 +123,26 @@ const Index = () => {
         </section>
 
         {/* ─── NOVIDADES ─── */}
-        {products.length > 0 && (
-          <section className="py-14 md:py-24 px-4 md:px-8 border-y border-white/10">
-            <div className="max-w-screen-xl mx-auto">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 md:mb-12 gap-3">
-                <div>
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">
-                    Destaques da Temporada
-                  </h2>
-                  <p className="text-gray-500 font-light text-base md:text-lg">As peças mais amadas de nossa coleção.</p>
-                </div>
-                <Link
-                  to="/category/all"
-                  className="group flex items-center justify-center w-full sm:w-auto bg-yellow-50 sm:bg-transparent py-4 sm:py-2 rounded-xl text-sm md:text-base font-bold transition-all hover:bg-yellow-100/50"
-                  style={{ color: '#C5A028' }}
-                >
-                  VER TODO O CATÁLOGO
-                  <span className="ml-2 group-hover:translate-x-2 transition-transform">→</span>
-                </Link>
+        <section className="py-14 md:py-24 px-4 md:px-8 border-y border-white/10">
+          <div className="max-w-screen-xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 md:mb-12 gap-3">
+              <div>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+                  Destaques da Temporada
+                </h2>
+                <p className="text-gray-500 font-light text-base md:text-lg">As peças mais amadas de nossa coleção.</p>
               </div>
+              <Link
+                to="/category/all"
+                className="group flex items-center justify-center w-full sm:w-auto bg-yellow-50 sm:bg-transparent py-4 sm:py-2 rounded-xl text-sm md:text-base font-bold transition-all hover:bg-yellow-100/50"
+                style={{ color: '#C5A028' }}
+              >
+                VER TODO O CATÁLOGO
+                <span className="ml-2 group-hover:translate-x-2 transition-transform">→</span>
+              </Link>
+            </div>
 
+            {products.length > 0 ? (
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-10">
                 {products.slice(0, 4).map((product) => (
                   <Link
@@ -159,9 +171,13 @@ const Index = () => {
                   </Link>
                 ))}
               </div>
-            </div>
-          </section>
-        )}
+            ) : (
+              <div className="text-center py-20 bg-white/10 rounded-3xl border border-dashed border-gray-300">
+                <p className="text-gray-400 font-light">Nenhum produto em destaque no momento. Novos itens em breve!</p>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* ─── NOSSA LOJA ─── */}
         <section id="nossa-loja" className="py-14 md:py-24 px-4 md:px-8 max-w-screen-xl mx-auto">

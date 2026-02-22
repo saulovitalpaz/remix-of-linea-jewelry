@@ -9,9 +9,10 @@ import { ProductService } from "../../services/ProductService";
 
 interface ProductGridProps {
   category?: string;
+  onLoad?: (count: number) => void;
 }
 
-const ProductGrid = ({ category }: ProductGridProps) => {
+const ProductGrid = ({ category, onLoad }: ProductGridProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -20,10 +21,12 @@ const ProductGrid = ({ category }: ProductGridProps) => {
       const filtered = category && category !== 'all'
         ? allProducts.filter(p => p.category.toLowerCase() === category.toLowerCase())
         : allProducts;
+
       setProducts(filtered);
       setIsLoading(false);
+      if (onLoad) onLoad(filtered.length);
     });
-  }, [category]);
+  }, [category, onLoad]);
 
   const filteredProducts = products;
 

@@ -8,7 +8,7 @@ import ProductInfo from "../components/product/ProductInfo";
 import ProductDescription from "../components/product/ProductDescription";
 import ProductCarousel from "../components/content/ProductCarousel";
 
-import { Product } from "../types/product";
+import { Product, CATEGORIES } from "../types/product";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -75,7 +75,9 @@ const ProductDetail = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to={`/category/${product.category.toLowerCase()}`}>{product.category}</Link>
+                    <Link to={`/category/${product.category.toLowerCase()}`}>
+                      {CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category}
+                    </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
