@@ -1,21 +1,31 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { Minus, Plus } from "lucide-react";
+import { Product, CATEGORIES } from "../../types/product";
 
-const ProductInfo = () => {
+interface ProductInfoProps {
+  product: Product;
+}
+
+const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
+
+  const buyViaWhatsApp = () => {
+    const message = encodeURIComponent(`Olá! Gostaria de encomendar ${quantity}x ${product.name} (R$ ${product.price.toFixed(2)} cada). Total: R$ ${(product.price * quantity).toFixed(2)}.`);
+    window.open(`https://wa.me/5551999999999?text=${message}`, '_blank');
+  };
 
   return (
     <div className="space-y-6">
@@ -25,18 +35,18 @@ const ProductInfo = () => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/">Home</Link>
+                <Link to="/">Início</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/category/earrings">Earrings</Link>
+                <Link to={`/category/${product.category.toLowerCase()}`}>{CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Pantheon</BreadcrumbPage>
+              <BreadcrumbPage>{product.name}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -46,42 +56,21 @@ const ProductInfo = () => {
       <div className="space-y-2">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm font-light text-muted-foreground mb-1">Earrings</p>
-            <h1 className="text-2xl md:text-3xl font-light text-foreground">Pantheon</h1>
+            <p className="text-sm font-light text-muted-foreground mb-1">{CATEGORIES[product.category as keyof typeof CATEGORIES]}</p>
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground">{product.name}</h1>
           </div>
           <div className="text-right">
-            <p className="text-xl font-light text-foreground">€2,850</p>
+            <p className="text-2xl font-bold text-primary-gold">R$ {product.price.toFixed(2)}</p>
           </div>
         </div>
       </div>
 
-      {/* Product details */}
-      <div className="space-y-4 py-4 border-b border-border">
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Material</h3>
-          <p className="text-sm font-light text-muted-foreground">18k Gold Plated Sterling Silver</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Dimensions</h3>
-          <p className="text-sm font-light text-muted-foreground">2.5cm x 1.2cm</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Weight</h3>
-          <p className="text-sm font-light text-muted-foreground">4.2g per earring</p>
-        </div>
-        
-        <div className="space-y-2">
-          <h3 className="text-sm font-light text-foreground">Editor's notes</h3>
-          <p className="text-sm font-light text-muted-foreground italic">"A modern interpretation of classical architecture, these earrings bridge timeless elegance with contemporary minimalism."</p>
-        </div>
-      </div>
+      {/* Product choices/options could go here */}
 
       {/* Quantity and Add to Cart */}
-      <div className="space-y-4">
+      <div className="space-y-4 pt-4">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-light text-foreground">Quantity</span>
+          <span className="text-sm font-light text-foreground">Quantidade</span>
           <div className="flex items-center border border-border">
             <Button
               variant="ghost"
@@ -105,11 +94,29 @@ const ProductInfo = () => {
           </div>
         </div>
 
-        <Button 
-          className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 font-light rounded-none"
-        >
-          Add to Bag
-        </Button>
+        <div className="flex flex-col gap-3">
+          <Button
+            onClick={buyViaWhatsApp}
+            className="w-full h-14 bg-green-600 text-white hover:bg-green-700 font-bold rounded-lg flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-xl transition-all"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+            Comprar pelo WhatsApp
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full h-12 border-foreground text-foreground hover:bg-foreground/5 font-light"
+          >
+            Adicionar à sacola
+          </Button>
+        </div>
+      </div>
+
+      <div className="pt-6 border-t border-border">
+        <p className="text-sm text-muted-foreground">
+          <strong>Pagamento:</strong> Aceitamos PIX, Cartão e Dinheiro.<br />
+          <strong>Entrega:</strong> Retirada no Quiosque ou Motoboy.
+        </p>
       </div>
     </div>
   );

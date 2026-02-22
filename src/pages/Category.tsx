@@ -14,21 +14,21 @@ const Category = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="pt-6">
-        <CategoryHeader 
-          category={category || 'All Products'} 
+        <CategoryHeader
+          category={category || 'All Products'}
         />
-        
-        <FilterSortBar 
+
+        <FilterSortBar
           filtersOpen={filtersOpen}
           setFiltersOpen={setFiltersOpen}
           itemCount={24}
         />
-        
-        <ProductGrid />
+
+        <ProductGrid category={category} />
       </main>
-      
+
       <Footer />
     </div>
   );

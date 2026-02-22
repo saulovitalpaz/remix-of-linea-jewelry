@@ -6,22 +6,40 @@ import ProductImageGallery from "../components/product/ProductImageGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import ProductDescription from "../components/product/ProductDescription";
 import ProductCarousel from "../components/content/ProductCarousel";
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import productsData from "../data/products.json";
+import { Product } from "../types/product";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 
+import { ProductService } from "../services/ProductService";
+
 const ProductDetail = () => {
-  const { productId } = useParams();
+  const { id } = useParams();
+  const product = id ? ProductService.getProductById(id) : null;
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="pt-20 text-center">
+          <h2 className="text-2xl font-light">Produto não encontrado</h2>
+          <Link to="/" className="text-primary-gold mt-4 block">Voltar ao início</Link>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="pt-6">
         <section className="w-full px-6">
           {/* Breadcrumb - Show above image on smaller screens */}
@@ -36,42 +54,35 @@ const ProductDetail = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to="/category/earrings">Earrings</Link>
+                    <Link to={`/category/${product.category.toLowerCase()}`}>{product.category}</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Pantheon</BreadcrumbPage>
+                  <BreadcrumbPage>{product.name}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-            <ProductImageGallery />
-            
+            <ProductImageGallery imageUrl={product.imageUrl} />
+
             <div className="lg:pl-12 mt-8 lg:mt-0 lg:sticky lg:top-6 lg:h-fit">
-              <ProductInfo />
-              <ProductDescription />
+              <ProductInfo product={product} />
+              <ProductDescription description={product.description} />
             </div>
           </div>
         </section>
-        
+
         <section className="w-full mt-16 lg:mt-24">
           <div className="mb-4 px-6">
-            <h2 className="text-sm font-light text-foreground">You might also like</h2>
-          </div>
-          <ProductCarousel />
-        </section>
-        
-        <section className="w-full">
-          <div className="mb-4 px-6">
-            <h2 className="text-sm font-light text-foreground">Our other Earrings</h2>
+            <h2 className="text-sm font-light text-foreground">Você também pode gostar</h2>
           </div>
           <ProductCarousel />
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

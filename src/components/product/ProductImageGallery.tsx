@@ -14,7 +14,8 @@ const productImages = [
   haloImage,
 ];
 
-const ProductImageGallery = () => {
+const ProductImageGallery = ({ imageUrl }: { imageUrl?: string }) => {
+  const images = imageUrl ? [imageUrl, ...productImages] : productImages;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomInitialIndex, setZoomInitialIndex] = useState(0);
@@ -22,11 +23,11 @@ const ProductImageGallery = () => {
   const touchEndX = useRef<number | null>(null);
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + productImages.length) % productImages.length);
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const handleImageClick = (index: number) => {
@@ -44,7 +45,7 @@ const ProductImageGallery = () => {
 
   const handleTouchEnd = () => {
     if (!touchStartX.current || !touchEndX.current) return;
-    
+
     const difference = touchStartX.current - touchEndX.current;
     const minSwipeDistance = 50;
 
@@ -67,9 +68,9 @@ const ProductImageGallery = () => {
       {/* Desktop: Vertical scrolling gallery (1024px and above) */}
       <div className="hidden lg:block">
         <div className="space-y-4">
-          {productImages.map((image, index) => (
-            <div 
-              key={index} 
+          {images.map((image, index) => (
+            <div
+              key={index}
               className="w-full aspect-square overflow-hidden cursor-pointer group"
               onClick={() => handleImageClick(index)}
             >
@@ -86,7 +87,7 @@ const ProductImageGallery = () => {
       {/* Tablet/Mobile: Image slider (below 1024px) */}
       <div className="lg:hidden">
         <div className="relative">
-          <div 
+          <div
             className="w-full aspect-square overflow-hidden cursor-pointer group touch-pan-y"
             onClick={() => handleImageClick(currentImageIndex)}
             onTouchStart={handleTouchStart}
@@ -94,21 +95,20 @@ const ProductImageGallery = () => {
             onTouchEnd={handleTouchEnd}
           >
             <img
-              src={productImages[currentImageIndex]}
+              src={images[currentImageIndex]}
               alt={`Product view ${currentImageIndex + 1}`}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 select-none"
             />
           </div>
-          
+
           {/* Dots indicator */}
           <div className="flex justify-center mt-4 gap-2">
-            {productImages.map((_, index) => (
+            {images.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index === currentImageIndex ? 'bg-foreground' : 'bg-muted'
-                }`}
+                className={`w-2 h-2 rounded-full transition-colors ${index === currentImageIndex ? 'bg-foreground' : 'bg-muted'
+                  }`}
               />
             ))}
           </div>
@@ -117,7 +117,7 @@ const ProductImageGallery = () => {
 
       {/* Image Zoom Modal */}
       <ImageZoom
-        images={productImages}
+        images={images}
         initialIndex={zoomInitialIndex}
         isOpen={isZoomOpen}
         onClose={() => setIsZoomOpen(false)}
