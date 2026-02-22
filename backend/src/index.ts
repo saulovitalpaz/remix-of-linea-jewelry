@@ -121,20 +121,19 @@ app.put('/api/products/:id', authenticateAdmin, upload.single('image'), async (r
     const file = req.file;
 
     try {
-        const updateData: any = {
-            name,
-            price: price ? parseFloat(price) : undefined,
-            description,
-            stock: stock !== undefined ? parseInt(stock, 10) : undefined,
-            categoryId
-        };
+        const updateData: any = {};
+        if (name !== undefined) updateData.name = name;
+        if (price !== undefined) updateData.price = parseFloat(price);
+        if (description !== undefined) updateData.description = description;
+        if (stock !== undefined) updateData.stock = parseInt(stock, 10);
+        if (categoryId !== undefined) updateData.categoryId = categoryId;
 
         if (file) {
             updateData.imageUrl = await uploadToCloudinary(file.buffer);
         }
 
         const product = await prisma.product.update({
-            where: { id: req.params.id },
+            where: { id: req.params.id as string },
             data: updateData
         });
         res.json(product);
