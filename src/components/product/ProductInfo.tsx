@@ -94,18 +94,18 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="fixed bottom-0 left-0 w-full p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 transition-all md:static md:p-0 md:bg-transparent md:border-none md:shadow-none md:z-auto flex flex-col gap-3">
           <Button
             onClick={buyViaWhatsApp}
-            className="w-full h-14 bg-green-600 text-white hover:bg-green-700 font-bold rounded-lg flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-xl transition-all"
+            className="w-full h-14 bg-[#25D366] text-white hover:bg-[#20bd5a] font-bold rounded-2xl flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
             Comprar pelo WhatsApp
           </Button>
 
           <Button
             variant="outline"
-            className="w-full h-12 border-foreground text-foreground hover:bg-foreground/5 font-light"
+            className="w-full h-12 md:h-14 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-bold rounded-2xl md:rounded-xl transition-all"
           >
             Adicionar à sacola
           </Button>

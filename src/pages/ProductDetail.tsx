@@ -7,7 +7,7 @@ import ProductImageGallery from "../components/product/ProductImageGallery";
 import ProductInfo from "../components/product/ProductInfo";
 import ProductDescription from "../components/product/ProductDescription";
 import ProductCarousel from "../components/content/ProductCarousel";
-import productsData from "../data/products.json";
+
 import { Product } from "../types/product";
 import {
   Breadcrumb,
@@ -61,8 +61,8 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="pt-6">
-        <section className="w-full px-6">
+      <main className="pt-6 pb-36 md:pb-0">
+        <section className="w-full px-4 md:px-6">
           {/* Breadcrumb - Show above image on smaller screens */}
           <div className="lg:hidden mb-6">
             <Breadcrumb>

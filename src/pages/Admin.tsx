@@ -142,12 +142,12 @@ const Admin = () => {
         <div className="min-h-screen bg-[#FDFBF7]">
             <Header />
             <main className="container mx-auto px-6 py-12">
-                <div className="flex justify-between items-center mb-12">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-12 gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold gold-text">Gestão de Estoque</h1>
-                        <p className="text-gray-500 mt-2">Adicione novos produtos ou gerencie sua vitrine.</p>
+                        <h1 className="text-3xl md:text-4xl font-bold gold-text">Gestão de Estoque</h1>
+                        <p className="text-gray-500 mt-2 text-sm md:text-base">Adicione novos produtos ou gerencie sua vitrine.</p>
                     </div>
-                    <Button onClick={() => { setEditingProduct({}); setIsAdding(true); }} className="romantic-button px-8 py-6 rounded-2xl shadow-xl font-bold">
+                    <Button onClick={() => { setEditingProduct({}); setIsAdding(true); }} className="romantic-button w-full md:w-auto px-8 py-6 md:py-6 rounded-2xl shadow-xl font-bold text-lg">
                         + Novo Produto
                     </Button>
                 </div>
@@ -230,17 +230,17 @@ const Admin = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="flex gap-4 pt-4">
+                                <div className="flex flex-col sm:flex-row gap-4 pt-6">
                                     <Button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="romantic-button px-10 py-6 rounded-2xl shadow-xl font-bold flex items-center gap-2"
+                                        className="romantic-button w-full sm:w-auto px-10 py-6 md:py-7 rounded-2xl shadow-xl font-bold flex items-center justify-center gap-2 text-lg"
                                     >
                                         {isLoading ? "Salvando..." : "Preservar Produto"}
                                     </Button>
                                     <Button
                                         onClick={() => { setEditingProduct(null); setIsAdding(false); setImageFile(null); }}
-                                        className="bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors px-8 py-6 rounded-2xl font-bold border-none"
+                                        className="bg-gray-100 text-gray-500 hover:bg-gray-200 w-full sm:w-auto transition-colors px-8 py-6 md:py-7 rounded-2xl font-bold border-none text-lg"
                                     >
                                         Descartar Mudanças
                                     </Button>
@@ -256,11 +256,13 @@ const Admin = () => {
                             <CardContent className="p-0">
                                 <div className="aspect-[4/5] overflow-hidden relative">
                                     <img src={product.imageUrl || "/quioske.jpeg"} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                                        <Button onClick={() => { setEditingProduct(product); setIsAdding(false); }} className="bg-white text-black hover:bg-gray-100 rounded-full h-12 w-12 p-0 flex items-center justify-center">
+
+                                    {/* Botões de Ação Permanentes no Mobile, Hover no Desktop */}
+                                    <div className="absolute top-3 right-3 flex flex-col gap-2 z-10 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
+                                        <Button onClick={() => { setEditingProduct(product); setIsAdding(false); }} className="bg-white/90 text-black hover:bg-white rounded-full h-12 w-12 p-0 shadow-lg flex items-center justify-center backdrop-blur-md text-xl border border-gray-100">
                                             ✏️
                                         </Button>
-                                        <Button onClick={() => handleDelete(product.id)} className="bg-red-500 text-white hover:bg-red-600 rounded-full h-12 w-12 p-0 flex items-center justify-center">
+                                        <Button onClick={() => handleDelete(product.id)} className="bg-red-500/90 text-white hover:bg-red-600 rounded-full h-12 w-12 p-0 shadow-lg flex items-center justify-center backdrop-blur-md text-xl border border-red-400">
                                             🗑️
                                         </Button>
                                     </div>
