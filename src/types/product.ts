@@ -3,12 +3,12 @@ export type Category = 'infantil' | 'semijoias' | 'make' | 'bolsas';
 export interface Product {
     id: string;
     name: string;
-    category: Category;
+    category: string;
     price: number;
     description: string;
     imageUrl?: string;
-    isPublic: boolean;
-    createdAt: string;
+    isPublic?: boolean;
+    createdAt?: string;
 }
 
 export const CATEGORIES: Record<Category, string> = {

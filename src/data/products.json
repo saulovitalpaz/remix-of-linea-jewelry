@@ -3,14 +3,48 @@
         "id": "1",
         "name": "Bolsa Infantil Rosa",
         "price": 89.90,
-        "category": "INFANTIL",
-        "description": "Linda bolsa com glitter para crianças."
+        "category": "infantil",
+        "imageUrl": "/quioske.jpeg",
+        "description": "Linda bolsa com glitter para crianças. Feita com materiais de qualidade, ideal para as pequenas que adoram estilo."
     },
     {
         "id": "2",
         "name": "Brinco de Pérola",
         "price": 45.00,
-        "category": "BIJUTERIA",
-        "description": "Clássico e elegante."
+        "category": "semijoias",
+        "imageUrl": "/quioske.jpeg",
+        "description": "Clássico e elegante. Brinco de pérola sintética com haste em metal dourado. Ideal para uso no dia a dia ou ocasiões especiais."
+    },
+    {
+        "id": "3",
+        "name": "Batom Coral Premium",
+        "price": 32.00,
+        "category": "make",
+        "imageUrl": "/quioske.jpeg",
+        "description": "Batom de longa duração na cor coral vibrante. Fórmula hidratante e pigmentação intensa."
+    },
+    {
+        "id": "4",
+        "name": "Bolsa Mini Feminina",
+        "price": 119.90,
+        "category": "bolsas",
+        "imageUrl": "/quioske.jpeg",
+        "description": "Mini bolsa feminina com alça tiracolo. Estilo moderno e delicado, perfeito para sair com praticidade."
+    },
+    {
+        "id": "5",
+        "name": "Colar Dourado Folheado",
+        "price": 68.00,
+        "category": "semijoias",
+        "imageUrl": "/quioske.jpeg",
+        "description": "Colar delicado folheado a ouro 18k. Perfeito para complementar qualquer look do dia a dia."
+    },
+    {
+        "id": "6",
+        "name": "Kit Maquiagem Básico",
+        "price": 87.50,
+        "category": "make",
+        "imageUrl": "/quioske.jpeg",
+        "description": "Kit completo com base, blush e iluminador para uma make natural e duradoura."
     }
 ]

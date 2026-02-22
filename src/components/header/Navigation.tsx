@@ -1,417 +1,128 @@
-import { ArrowRight, X, Minus, Plus } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import ShoppingBag from "./ShoppingBag";
-import pantheonImage from "@/assets/pantheon.jpg";
-import eclipseImage from "@/assets/eclipse.jpg";
-import haloImage from "@/assets/halo.jpg";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: string;
-  image: string;
-  quantity: number;
-  category: string;
-}
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const Navigation = () => {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [offCanvasType, setOffCanvasType] = useState<'favorites' | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isShoppingBagOpen, setIsShoppingBagOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const navigate = useNavigate();
 
-  // Shopping bag state with 3 mock items
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Pantheon",
-      price: "€2,850",
-      image: pantheonImage,
-      quantity: 1,
-      category: "Earrings"
-    },
-    {
-      id: 2,
-      name: "Eclipse",
-      price: "€3,200",
-      image: eclipseImage,
-      quantity: 1,
-      category: "Bracelets"
-    },
-    {
-      id: 3,
-      name: "Halo",
-      price: "€1,950",
-      image: haloImage,
-      quantity: 1,
-      category: "Earrings"
-    }
-  ]);
+  const categories = [
+    { label: "Linha Infantil", slug: "infantil" },
+    { label: "Semijoias & Bijuterias", slug: "semijoias" },
+    { label: "Beleza & Make", slug: "make" },
+    { label: "Bolsas", slug: "bolsas" },
+  ];
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      setCartItems(items => items.filter(item => item.id !== id));
-    } else {
-      setCartItems(items =>
-        items.map(item =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/category/all?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery("");
     }
   };
 
-  // Preload dropdown images for faster display
-  useEffect(() => {
-    const imagesToPreload = [
-      "/rings-collection.png",
-      "/earrings-collection.png",
-      "/arcus-bracelet.png",
-      "/span-bracelet.png",
-      "/founders.png"
-    ];
-
-    imagesToPreload.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
-  }, []);
-
-  const popularSearches = [
-    "Gold Rings",
-    "Silver Necklaces",
-    "Pearl Earrings",
-    "Designer Bracelets",
-    "Wedding Rings",
-    "Vintage Collection"
-  ];
-
-  const navItems = [
-    {
-      name: "Shop",
-      href: "/category/all",
-      submenuItems: [
-        { name: "Linha Infantil", slug: "infantil" },
-        { name: "Semijoias & Bijuterias", slug: "semijoias" },
-        { name: "Beleza & Make", slug: "make" },
-        { name: "Bolsas Femininas", slug: "bolsas" }
-      ],
-      images: [
-        { src: "/quioske.jpeg", alt: "Nossa Loja", label: "Visite-nos" }
-      ]
-    },
-    {
-      name: "Novidades",
-      href: "/category/new-in",
-      submenuItems: [
-        "Lançamentos da Semana",
-        "Coleção Romântica",
-        "Mais Vendidos"
-      ],
-      images: [
-        { src: "/quioske.jpeg", alt: "Novidades", label: "Ver novidades" }
-      ]
-    },
-    {
-      name: "Sobre",
-      href: "/about/our-story",
-      submenuItems: [
-        "Nossa História",
-        "Loja Física",
-        "Contato"
-      ],
-      images: [
-        { src: "/quioske.jpeg", alt: "Sobre nós", label: "Conheça a Chique Detalhes" }
-      ]
-    }
-  ];
-
   return (
-    <nav
-      className="relative"
-      style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(10px)'
-      }}
-    >
-      <div className="flex items-center justify-between h-16 px-6">
-        {/* Mobile hamburger button */}
-        <button
-          className="lg:hidden p-2 mt-0.5 text-nav-foreground hover:text-nav-hover transition-colors duration-200"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          <div className="w-5 h-5 relative">
-            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 top-2.5' : 'top-1.5'
-              }`}></span>
-            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 top-2.5 ${isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
-              }`}></span>
-            <span className={`absolute block w-5 h-px bg-current transform transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 top-2.5' : 'top-3.5'
-              }`}></span>
-          </div>
-        </button>
+    <header className="w-full sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+      <div className="max-w-screen-xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
 
-        {/* Left navigation - Hidden on tablets and mobile */}
-        <div className="hidden lg:flex space-x-8">
-          {navItems.map((item) => (
-            <div
-              key={item.name}
-              className="relative"
-              onMouseEnter={() => setActiveDropdown(item.name)}
-              onMouseLeave={() => setActiveDropdown(null)}
+        {/* Left — Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-6">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              to={`/category/${cat.slug}`}
+              className="text-sm font-light text-gray-700 hover:text-yellow-600 transition-colors whitespace-nowrap"
             >
-              <Link
-                to={item.href}
-                className="text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-sm font-light py-6 block"
-              >
-                {item.name}
-              </Link>
-            </div>
+              {cat.label}
+            </Link>
           ))}
-        </div>
+        </nav>
 
-        {/* Center logo */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <Link to="/" className="block">
+        {/* Center — Logo */}
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <Link to="/" className="flex items-center justify-center">
             <img
               src="/logo1.png"
               alt="Chique Detalhes"
-              className="h-10 md:h-12 w-auto object-contain transition-transform duration-300 hover:scale-105"
+              className="h-10 w-auto object-contain"
             />
           </Link>
         </div>
 
-        {/* Right icons */}
-        <div className="flex items-center space-x-4">
-          <button
-            className="p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200"
-            aria-label="Search"
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        {/* Right — Icons */}
+        <div className="flex items-center gap-3 ml-auto">
+          {/* Search toggle */}
+          {searchOpen ? (
+            <form onSubmit={handleSearch} className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar produtos..."
+                className="text-sm border-b border-gray-300 outline-none px-1 py-0.5 w-40 focus:border-yellow-500 transition-colors"
+              />
+              <button type="button" onClick={() => setSearchOpen(false)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">&times;</button>
+            </form>
+          ) : (
+            <button onClick={() => setSearchOpen(true)} className="p-2 text-gray-600 hover:text-yellow-600 transition-colors" aria-label="Buscar">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </button>
+          )}
+
+          {/* Admin link */}
+          <Link to="/admin" className="hidden md:block p-2 text-gray-400 hover:text-yellow-600 transition-colors" aria-label="Admin" title="Painel Admin">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
             </svg>
-          </button>
+          </Link>
+
+          {/* Mobile hamburger */}
           <button
-            className="hidden lg:block p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200"
-            aria-label="Favorites"
-            onClick={() => setOffCanvasType('favorites')}
+            className="md:hidden p-2 text-gray-700"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Menu"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-            </svg>
-          </button>
-          <button
-            className="p-2 text-nav-foreground hover:text-nav-hover transition-colors duration-200 relative"
-            aria-label="Shopping bag"
-            onClick={() => setIsShoppingBagOpen(true)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-            </svg>
-            {totalItems > 0 && (
-              <span className="absolute top-[1.3rem] left-1/2 transform -translate-x-1/2 text-[0.6rem] font-bold text-primary-gold pointer-events-none">
-                {totalItems}
-              </span>
+            {mobileMenuOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
             )}
           </button>
         </div>
       </div>
 
-      {/* Full width dropdown */}
-      {activeDropdown && (
-        <div
-          className="absolute top-full left-0 right-0 bg-nav border-b border-border z-50"
-          onMouseEnter={() => setActiveDropdown(activeDropdown)}
-          onMouseLeave={() => setActiveDropdown(null)}
-        >
-          <div className="px-6 py-8">
-            <div className="flex justify-between w-full">
-              {/* Left side - Menu items */}
-              <div className="flex-1">
-                <ul className="space-y-2">
-                  {navItems
-                    .find(item => item.name === activeDropdown)
-                    ?.submenuItems.map((subItem, index) => (
-                      <li key={index}>
-                        <Link
-                          to={typeof subItem === 'string'
-                            ? (activeDropdown === "About" ? `/about/${subItem.toLowerCase().replace(/\s+/g, '-')}` : `/category/${subItem.toLowerCase()}`)
-                            : `/category/${subItem.slug}`}
-                          className="text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-sm font-light block py-2"
-                        >
-                          {typeof subItem === 'string' ? subItem : subItem.name}
-                        </Link>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-
-              {/* Right side - Images */}
-              <div className="flex space-x-6">
-                {navItems
-                  .find(item => item.name === activeDropdown)
-                  ?.images.map((image, index) => {
-                    // Determine the link destination based on dropdown and image
-                    let linkTo = "/";
-                    if (activeDropdown === "Shop") {
-                      if (image.label === "Rings") linkTo = "/category/rings";
-                      else if (image.label === "Earrings") linkTo = "/category/earrings";
-                    } else if (activeDropdown === "New in") {
-                      if (image.label === "Arcus Bracelet") linkTo = "/product/arcus-bracelet";
-                      else if (image.label === "Span Bracelet") linkTo = "/product/span-bracelet";
-                    } else if (activeDropdown === "About") {
-                      linkTo = "/about/our-story";
-                    }
-
-                    return (
-                      <Link key={index} to={linkTo} className="w-[400px] h-[280px] cursor-pointer group relative overflow-hidden block">
-                        <img
-                          src={image.src}
-                          alt={image.alt}
-                          className="w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                        />
-                        {(activeDropdown === "Shop" || activeDropdown === "New in" || activeDropdown === "About") && (
-                          <div className="absolute bottom-2 left-2 text-white text-xs font-light flex items-center gap-1">
-                            <span>{image.label}</span>
-                            <ArrowRight size={12} />
-                          </div>
-                        )}
-                      </Link>
-                    );
-                  })}
-              </div>
-            </div>
-          </div>
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              to={`/category/${cat.slug}`}
+              className="block text-sm font-light text-gray-700 hover:text-yellow-600 transition-colors py-2 border-b border-gray-50"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {cat.label}
+            </Link>
+          ))}
+          <Link
+            to="/admin"
+            className="block text-sm text-gray-400 hover:text-yellow-600 transition-colors py-2"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Painel Admin
+          </Link>
         </div>
       )}
-
-      {/* Search overlay */}
-      {isSearchOpen && (
-        <div
-          className="absolute top-full left-0 right-0 bg-nav border-b border-border z-50"
-        >
-          <div className="px-6 py-8">
-            <div className="max-w-2xl mx-auto">
-              {/* Search input */}
-              <div className="relative mb-8">
-                <div className="flex items-center border-b border-border pb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5 text-nav-foreground mr-3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search for jewelry..."
-                    className="flex-1 bg-transparent text-nav-foreground placeholder:text-nav-foreground/60 outline-none text-lg"
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              {/* Popular searches */}
-              <div>
-                <h3 className="text-nav-foreground text-sm font-light mb-4">Popular Searches</h3>
-                <div className="flex flex-wrap gap-3">
-                  {popularSearches.map((search, index) => (
-                    <button
-                      key={index}
-                      className="text-nav-foreground hover:text-nav-hover text-sm font-light py-2 px-4 border border-border rounded-full transition-colors duration-200 hover:border-nav-hover"
-                    >
-                      {search}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile navigation menu */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-nav border-b border-border z-50">
-          <div className="px-6 py-8">
-            <div className="space-y-6">
-              {navItems.map((item, index) => (
-                <div key={item.name}>
-                  <Link
-                    to={item.href}
-                    className="text-nav-foreground hover:text-nav-hover transition-colors duration-200 text-lg font-light block py-2"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                  <div className="mt-3 pl-4 space-y-2">
-                    {item.submenuItems.map((subItem, subIndex) => (
-                      <Link
-                        key={subIndex}
-                        to={typeof subItem === 'string'
-                          ? (item.name === "About" ? `/about/${subItem.toLowerCase().replace(/\s+/g, '-')}` : `/category/${subItem.toLowerCase()}`)
-                          : `/category/${subItem.slug}`}
-                        className="text-nav-foreground/70 hover:text-nav-hover text-sm font-light block py-1"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {typeof subItem === 'string' ? subItem : subItem.name}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Shopping Bag Component */}
-      <ShoppingBag
-        isOpen={isShoppingBagOpen}
-        onClose={() => setIsShoppingBagOpen(false)}
-        cartItems={cartItems}
-        updateQuantity={updateQuantity}
-        onViewFavorites={() => {
-          setIsShoppingBagOpen(false);
-          setOffCanvasType('favorites');
-        }}
-      />
-
-      {/* Favorites Off-canvas overlay */}
-      {offCanvasType === 'favorites' && (
-        <div className="fixed inset-0 z-50 h-screen">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 h-screen"
-            onClick={() => setOffCanvasType(null)}
-          />
-
-          {/* Off-canvas panel */}
-          <div className="absolute right-0 top-0 h-screen w-96 bg-background border-l border-border animate-slide-in-right flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="text-lg font-light text-foreground">Your Favorites</h2>
-              <button
-                onClick={() => setOffCanvasType(null)}
-                className="p-2 text-foreground hover:text-muted-foreground transition-colors"
-                aria-label="Close"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              <p className="text-muted-foreground text-sm mb-6">
-                You haven't added any favorites yet. Browse our collection and click the heart icon to save items you love.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-    </nav>
+    </header>
   );
 };
 
