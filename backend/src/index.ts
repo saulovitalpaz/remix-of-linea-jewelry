@@ -128,6 +128,25 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Chique Detalhes API is running' });
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+// --- Seed Admin ---
+async function seedAdmin() {
+    const email = 'barbara@chiquedetalhes.com.br';
+    try {
+        const existing = await prisma.adminUser.findUnique({ where: { email } });
+        if (!existing) {
+            const passwordHash = await bcrypt.hash('Beijinho2023', 10);
+            await prisma.adminUser.create({
+                data: { email, passwordHash }
+            });
+            console.log('Admin user Bárbara Paz seeded successfully.');
+        }
+    } catch (e) {
+        console.error('Error seeding admin user:', e);
+    }
+}
+
+seedAdmin().then(() => {
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
 });

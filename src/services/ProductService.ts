@@ -1,5 +1,5 @@
 import { Product } from '../types/product';
-import productsData from '../data/products.json';
+
 
 const STORAGE_KEY = 'chique_detalhes_products';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -18,10 +18,10 @@ export const ProductService = {
             try {
                 return JSON.parse(stored);
             } catch (e) {
-                return productsData as Product[];
+                return [];
             }
         }
-        return productsData as Product[];
+        return [];
     },
 
     getProductById: async (id: string): Promise<Product | undefined> => {
