@@ -1,0 +1,16 @@
+[
+    {
+        "id": "1",
+        "name": "Bolsa Infantil Rosa",
+        "price": 89.90,
+        "category": "INFANTIL",
+        "description": "Linda bolsa com glitter para crianças."
+    },
+    {
+        "id": "2",
+        "name": "Brinco de Pérola",
+        "price": 45.00,
+        "category": "BIJUTERIA",
+        "description": "Clássico e elegante."
+    }
+]

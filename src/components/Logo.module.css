@@ -1,0 +1,15 @@
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logoImage {
+    max-width: 200px;
+}
+
+@media (min-width: 768px) {
+    .logoImage {
+        max-width: 250px;
+    }
+}
