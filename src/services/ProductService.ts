@@ -36,10 +36,13 @@ export const ProductService = {
         return products.find(p => p.id === id);
     },
 
-    saveProduct: async (product: FormData): Promise<Product> => {
+    saveProduct: async (product: FormData, id?: string): Promise<Product> => {
         const token = localStorage.getItem('admin_token');
-        const response = await fetch(`${API_URL}/products`, {
-            method: 'POST',
+        const url = id ? `${API_URL}/products/${id}` : `${API_URL}/products`;
+        const method = id ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
             headers: { 'Authorization': `Bearer ${token}` },
             body: product
         });
@@ -55,5 +58,17 @@ export const ProductService = {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) throw new Error('Failed to delete product');
+    },
+
+    getCategories: async (): Promise<any[]> => {
+        const response = await fetch(`${API_URL}/categories`);
+        if (response.ok) return await response.json();
+        return [];
+    },
+
+    getActivePopup: async (): Promise<any> => {
+        const response = await fetch(`${API_URL}/popup/active`);
+        if (response.ok) return await response.json();
+        return null;
     }
 };

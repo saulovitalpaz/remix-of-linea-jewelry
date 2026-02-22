@@ -1,18 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ProductService } from "../../services/ProductService";
 
 const Navigation = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
   const navigate = useNavigate();
 
-  const categories = [
-    { label: "Linha Infantil", slug: "infantil" },
-    { label: "Semijoias & Bijuterias", slug: "semijoias" },
-    { label: "Beleza & Make", slug: "make" },
-    { label: "Bolsas", slug: "bolsas" },
-  ];
+  useEffect(() => {
+    ProductService.getCategories().then(setCategories);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,11 +38,11 @@ const Navigation = () => {
           <nav className="hidden md:flex items-center gap-5 lg:gap-6">
             {categories.map((cat) => (
               <Link
-                key={cat.slug}
+                key={cat.id}
                 to={`/category/${cat.slug}`}
                 className="group relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap duration-300"
               >
-                {cat.label}
+                {cat.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-[#C5A028] to-[#E6C878] transition-all duration-300 group-hover:w-full rounded-full"></span>
               </Link>
             ))}
@@ -98,12 +97,12 @@ const Navigation = () => {
         <div className="md:hidden bg-white/80 backdrop-blur-xl border-t border-white/40 px-6 py-5 space-y-1 rounded-b-2xl md:rounded-b-[2rem]">
           {categories.map((cat) => (
             <Link
-              key={cat.slug}
+              key={cat.id}
               to={`/category/${cat.slug}`}
               className="block text-lg font-medium text-gray-800 hover:text-[#C5A028] transition-colors py-4 border-b border-gray-100/50"
               onClick={() => setMobileMenuOpen(false)}
             >
-              {cat.label}
+              {cat.name}
             </Link>
           ))}
 

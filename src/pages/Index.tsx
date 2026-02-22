@@ -4,33 +4,15 @@ import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import { Product, CATEGORIES } from "../types/product";
 import { ProductService } from "../services/ProductService";
-
-const FEATURED_CATEGORIES = [
-  {
-    label: "Linha Infantil",
-    slug: "infantil",
-    description: "Bolsas e acessórios delicados para as pequenas brilharem com doçura.",
-    emoji: "🎀",
-  },
-  {
-    label: "Semijoias & Bijuterias",
-    slug: "semijoias",
-    description: "Elegância eterna em peças selecionadas com o mais alto padrão de brilho.",
-    emoji: "💍",
-  },
-  {
-    label: "Beleza & Make",
-    slug: "make",
-    description: "Realce sua beleza natural com produtos essenciais de alta performance.",
-    emoji: "💄",
-  },
-];
+import { MarketingModal } from "../components/content/MarketingModal";
 
 const Index = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   useEffect(() => {
     ProductService.getProducts().then(setProducts);
+    ProductService.getCategories().then(setCategories);
   }, []);
 
   return (
@@ -45,6 +27,8 @@ const Index = () => {
         className="pointer-events-none fixed inset-y-0 right-0 w-12 md:w-24 z-40"
         style={{ background: 'linear-gradient(to left, rgba(197,160,40,0.08), transparent)' }}
       />
+
+      <MarketingModal />
 
       <Header />
 
@@ -100,9 +84,9 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
-            {FEATURED_CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <Link
-                key={cat.slug}
+                key={cat.id}
                 to={`/category/${cat.slug}`}
                 className="group relative overflow-hidden bg-white/10 backdrop-blur-sm rounded-2xl md:rounded-3xl p-6 md:p-10 hover:shadow-2xl transition-all duration-500 flex flex-col border border-white/20"
               >
@@ -113,7 +97,7 @@ const Index = () => {
                   </div>
                 </div>
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900 group-hover:text-[#b38d1e] transition-colors mb-2 md:mb-3">
-                  {cat.label}
+                  {cat.name}
                 </h3>
                 <p className="text-gray-500 font-light leading-relaxed mb-4 md:mb-6 text-sm md:text-base line-clamp-2">
                   {cat.description}
