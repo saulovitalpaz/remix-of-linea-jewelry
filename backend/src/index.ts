@@ -19,6 +19,7 @@ app.use(cors({
     origin: [
         'https://frontend-production-eab9.up.railway.app',
         'https://chiquedetalhes.com.br',
+        'https://www.chiquedetalhes.com.br',
         'http://localhost:5173'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
