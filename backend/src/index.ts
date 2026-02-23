@@ -16,15 +16,13 @@ const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 app.use((req, res, next) => {
-    const allowedOrigins = [
-        'https://frontend-production-eab9.up.railway.app',
-        'https://chiquedetalhes.com.br',
-        'https://www.chiquedetalhes.com.br',
-        'http://localhost:5173'
-    ];
     const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin as string)) {
-        res.setHeader('Access-Control-Allow-Origin', origin as string);
+    if (origin && (
+        origin.includes('chiquedetalhes.com.br') ||
+        origin.includes('up.railway.app') ||
+        origin.includes('localhost')
+    )) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
