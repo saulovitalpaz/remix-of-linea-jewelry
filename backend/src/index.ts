@@ -297,8 +297,14 @@ async function seedAdmin() {
     }
 }
 
-seedAdmin().then(() => {
-    app.listen(port as number, '0.0.0.0', () => {
-        console.log(`Server is running on port ${port} on 0.0.0.0`);
-    });
+// Health check route (required by Railway to detect the server is up)
+app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
+// Start server FIRST, then seed admin in background
+app.listen(port as number, '0.0.0.0', () => {
+    console.log(`Server is running on port ${port} on 0.0.0.0`);
+    // Run seed in background after server is confirmed UP
+    seedAdmin().catch(console.error);
 });
