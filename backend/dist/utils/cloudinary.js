@@ -3,9 +3,9 @@ import streamifier from 'streamifier';
 import dotenv from 'dotenv';
 dotenv.config();
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dl588nvuj',
+    api_key: process.env.CLOUDINARY_API_KEY || '285658214676941',
+    api_secret: process.env.CLOUDINARY_API_SECRET || 'pMt6A2dwFZ6trfW_AlEm9fPqyNg',
 });
 export const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {
