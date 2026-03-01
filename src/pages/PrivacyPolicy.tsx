@@ -4,7 +4,7 @@ import Footer from "../components/footer/Footer";
 
 const PrivacyPolicy = () => {
   useEffect(() => {
-    document.title = "Privacy Policy - Linea Jewelry";
+    document.title = "Política de Privacidade - Linea Jewelry";
   }, []);
 
   return (
@@ -14,116 +14,116 @@ const PrivacyPolicy = () => {
       <main className="pt-6">
         <div className="max-w-4xl mx-auto px-6 py-12">
           <header className="mb-12 text-center">
-            <h1 className="text-4xl font-light text-foreground mb-4">Privacy Policy</h1>
-            <p className="text-muted-foreground">Last updated: January 15, 2024</p>
+            <h1 className="text-4xl font-light text-foreground mb-4">Política de Privacidade</h1>
+            <p className="text-muted-foreground">Última atualização: 15 de janeiro de 2024</p>
           </header>
 
           <div className="prose prose-lg max-w-none space-y-8">
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Introduction</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Introdução</h2>
               <p className="text-muted-foreground leading-relaxed">
-                At Linea Jewelry Inc. ("we," "our," or "us"), we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, make a purchase, or interact with our services.
+                Na Linea Jewelry Inc. ("nós", "nosso" ou "conosco"), respeitamos a sua privacidade e estamos comprometidos em proteger seus dados pessoais. Esta Política de Privacidade explica como coletamos, usamos, divulgamos e protegemos suas informações quando você visita nosso site, realiza uma compra ou interage com nossos serviços.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Information We Collect</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Informações que Coletamos</h2>
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-light text-foreground mb-2">Personal Information</h3>
+                  <h3 className="text-xl font-light text-foreground mb-2">Informações Pessoais</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    We may collect personal information that you provide directly to us, including:
+                    Podemos coletar informações pessoais que você nos fornece diretamente, incluindo:
                   </p>
                   <ul className="list-disc list-inside text-muted-foreground mt-2 space-y-1">
-                    <li>Name, email address, and contact information</li>
-                    <li>Billing and shipping addresses</li>
-                    <li>Payment information (processed securely through third-party providers)</li>
-                    <li>Account preferences and communication settings</li>
+                    <li>Nome, endereço de e-mail e informações de contato</li>
+                    <li>Endereços de cobrança e entrega</li>
+                    <li>Informações de pagamento (processadas de forma segura por provedores terceirizados)</li>
+                    <li>Preferências de conta e configurações de comunicação</li>
                   </ul>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-light text-foreground mb-2">Usage Information</h3>
+                  <h3 className="text-xl font-light text-foreground mb-2">Informações de Uso</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    We automatically collect certain information about your device and usage patterns, including IP address, browser type, pages visited, and interaction data to improve our services and user experience.
+                    Coletamos automaticamente certas informações sobre seu dispositivo e padrões de uso, incluindo endereço IP, tipo de navegador, páginas visitadas e dados de interação para melhorar nossos serviços e a experiência do usuário.
                   </p>
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">How We Use Your Information</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Como Usamos Suas Informações</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                We use the information we collect for various purposes, including:
+                Usamos as informações que coletamos para diversos fins, incluindo:
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Processing and fulfilling your orders</li>
-                <li>Providing customer support and responding to inquiries</li>
-                <li>Sending promotional communications (with your consent)</li>
-                <li>Improving our website functionality and user experience</li>
-                <li>Preventing fraud and ensuring security</li>
-                <li>Complying with legal obligations</li>
+                <li>Processar e atender seus pedidos</li>
+                <li>Fornecer suporte ao cliente e responder a consultas</li>
+                <li>Enviar comunicações promocionais (com seu consentimento)</li>
+                <li>Melhorar a funcionalidade do nosso site e a experiência do usuário</li>
+                <li>Prevenir fraudes e garantir a segurança</li>
+                <li>Cumprir obrigações legais</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Information Sharing and Disclosure</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Compartilhamento e Divulgação de Informações</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                We do not sell, trade, or rent your personal information to third parties. We may share your information only in the following circumstances:
+                Não vendemos, trocamos ou alugamos suas informações pessoais para terceiros. Podemos compartilhar suas informações apenas nas seguintes circunstâncias:
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>With service providers who assist us in operating our business</li>
-                <li>When required by law or to protect our rights</li>
-                <li>In connection with a business transaction (merger, acquisition, etc.)</li>
-                <li>With your explicit consent</li>
+                <li>Com prestadores de serviços que nos auxiliam na operação do nosso negócio</li>
+                <li>Quando exigido por lei ou para proteger nossos direitos</li>
+                <li>Em conexão com uma transação comercial (fusão, aquisição, etc.)</li>
+                <li>Com seu consentimento explícito</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Data Security</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Segurança de Dados</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet or electronic storage is 100% secure.
+                Implementamos medidas técnicas e organizacionais apropriadas para proteger suas informações pessoais contra acesso não autorizado, alteração, divulgação ou destruição. No entanto, nenhum método de transmissão pela internet ou armazenamento eletrônico é 100% seguro.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Your Rights and Choices</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Seus Direitos e Escolhas</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Depending on your location, you may have certain rights regarding your personal information:
+                Dependendo da sua localização, você pode ter certos direitos em relação às suas informações pessoais:
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Access to your personal information</li>
-                <li>Correction of inaccurate or incomplete information</li>
-                <li>Deletion of your personal information</li>
-                <li>Objection to or restriction of processing</li>
-                <li>Data portability</li>
-                <li>Withdrawal of consent (where applicable)</li>
+                <li>Acesso às suas informações pessoais</li>
+                <li>Correção de informações imprecisas ou incompletas</li>
+                <li>Exclusão de suas informações pessoais</li>
+                <li>Oposição ou restrição ao processamento</li>
+                <li>Portabilidade de dados</li>
+                <li>Retirada de consentimento (quando aplicável)</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Cookies and Tracking</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Cookies e Rastreamento</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We use cookies and similar tracking technologies to enhance your browsing experience, analyze website traffic, and personalize content. You can control cookie settings through your browser preferences, though this may affect website functionality.
+                Usamos cookies e tecnologias de rastreamento semelhantes para melhorar sua experiência de navegação, analisar o tráfego do site e personalizar o conteúdo. Você pode controlar as configurações de cookies através das preferências do seu navegador, embora isso possa afetar a funcionalidade do site.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Changes to This Policy</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Alterações nesta Política</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on our website and updating the "Last updated" date above.
+                Podemos atualizar esta Política de Privacidade de tempos em tempos. Notificaremos você sobre quaisquer alterações significativas publicando a nova política em nosso site e atualizando a data de "Última atualização" acima.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Contact Us</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Contato</h2>
               <p className="text-muted-foreground leading-relaxed">
-                If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
+                Se você tiver alguma dúvida sobre esta Política de Privacidade ou nossas práticas de privacidade, entre em contato conosco em:
               </p>
               <div className="mt-4 text-muted-foreground">
-                <p>Email: privacy@lineajewelry.com</p>
-                <p>Phone: (77) 98859-0306</p>
-                <p>Address: Av. Juracy Magalhães, 3340 - Quiosque 115, Boa Vista, Vitória da Conquista - BA</p>
+                <p>E-mail: privacy@lineajewelry.com</p>
+                <p>Telefone: (77) 98859-0306</p>
+                <p>Endereço: Av. Juracy Magalhães, 3340 - Quiosque 115, Boa Vista, Vitória da Conquista - BA</p>
               </div>
             </section>
           </div>

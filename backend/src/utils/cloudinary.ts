@@ -5,9 +5,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string,
-    api_key: process.env.CLOUDINARY_API_KEY as string,
-    api_secret: process.env.CLOUDINARY_API_SECRET as string,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dl588nvuj',
+    api_key: process.env.CLOUDINARY_API_KEY || '285658214676941',
+    api_secret: process.env.CLOUDINARY_API_SECRET || 'pMt6A2dwFZ6trfW_AlEm9fPqyNg',
 });
 
 export const uploadToCloudinary = (fileBuffer: Buffer): Promise<string> => {

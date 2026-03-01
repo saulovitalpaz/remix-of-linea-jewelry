@@ -12,18 +12,27 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const upload = multer();
-const port = process.env.PORT || 3001;
+const port = parseInt(process.env.PORT || '3001', 10);
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && (
-        origin.includes('chiquedetalhes.com.br') ||
-        origin.includes('up.railway.app') ||
-        origin.includes('localhost')
-    )) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
+    const allowedOrigins = [
+        'chiquedetalhes.com.br',
+        'up.railway.app',
+        'localhost'
+    ];
+
+    if (origin) {
+        const isAllowed = allowedOrigins.some(ao => origin.includes(ao));
+        if (isAllowed) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+        }
+    } else {
+        // Fallback for requests without Origin header (like some health checks)
+        res.setHeader('Access-Control-Allow-Origin', '*');
     }
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -303,8 +312,12 @@ app.get('/health', (_req, res) => {
 });
 
 // Start server FIRST, then seed admin in background
-app.listen(port as number, '0.0.0.0', () => {
-    console.log(`Server is running on port ${port} on 0.0.0.0`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`[BOOT] Chique Detalhes API listening on 0.0.0.0:${port}`);
+    console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
+
     // Run seed in background after server is confirmed UP
-    seedAdmin().catch(console.error);
+    seedAdmin()
+        .then(() => console.log('[BOOT] Seed check completed.'))
+        .catch(err => console.error('[BOOT] Seed failed:', err));
 });

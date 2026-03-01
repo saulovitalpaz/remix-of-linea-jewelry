@@ -12,7 +12,21 @@ const prisma = new PrismaClient();
 const upload = multer();
 const port = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
-app.use(cors());
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && (origin.includes('chiquedetalhes.com.br') ||
+        origin.includes('up.railway.app') ||
+        origin.includes('localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 app.use(express.json());
 // --- Authentication Middleware ---
 const authenticateAdmin = (req, res, next) => {

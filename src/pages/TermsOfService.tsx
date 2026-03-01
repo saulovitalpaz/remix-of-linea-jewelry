@@ -4,7 +4,7 @@ import Footer from "../components/footer/Footer";
 
 const TermsOfService = () => {
   useEffect(() => {
-    document.title = "Terms of Service - Linea Jewelry";
+    document.title = "Termos de Serviço - Linea Jewelry";
   }, []);
 
   return (
@@ -14,131 +14,131 @@ const TermsOfService = () => {
       <main className="pt-6">
         <div className="max-w-4xl mx-auto px-6 py-12">
           <header className="mb-12 text-center">
-            <h1 className="text-4xl font-light text-foreground mb-4">Terms of Service</h1>
-            <p className="text-muted-foreground">Last updated: January 15, 2024</p>
+            <h1 className="text-4xl font-light text-foreground mb-4">Termos de Serviço</h1>
+            <p className="text-muted-foreground">Última atualização: 15 de janeiro de 2024</p>
           </header>
 
           <div className="prose prose-lg max-w-none space-y-8">
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Agreement to Terms</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Aceitação dos Termos</h2>
               <p className="text-muted-foreground leading-relaxed">
-                By accessing and using the Linea Jewelry Inc. website and services, you accept and agree to be bound by the terms and provision of this agreement. These Terms of Service govern your use of our website, products, and services.
+                Ao acessar e utilizar o site e os serviços da Linea Jewelry Inc., você aceita e concorda em estar vinculado aos termos e disposições deste contrato. Estes Termos de Serviço regem o uso do nosso site, produtos e serviços.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Use License</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Licença de Uso</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Permission is granted to temporarily download one copy of the materials on Linea Jewelry Inc.'s website for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
+                É concedida permissão para baixar temporariamente uma cópia dos materiais no site da Linea Jewelry Inc. apenas para visualização transitória pessoal e não comercial. Esta é a concessão de uma licença, não uma transferência de título, e sob esta licença você não pode:
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Modify or copy the materials</li>
-                <li>Use the materials for any commercial purpose or for any public display</li>
-                <li>Attempt to reverse engineer any software contained on the website</li>
-                <li>Remove any copyright or other proprietary notations from the materials</li>
+                <li>Modificar ou copiar os materiais</li>
+                <li>Usar os materiais para qualquer finalidade comercial ou para exibição pública</li>
+                <li>Tentar descompilar ou fazer engenharia reversa de qualquer software contido no site</li>
+                <li>Remover quaisquer direitos autorais ou outras notações de propriedade dos materiais</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Product Information and Availability</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Informações e Disponibilidade de Produtos</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We strive to provide accurate product information, including descriptions, pricing, and availability. However, we do not warrant that product descriptions or other content is accurate, complete, reliable, or error-free. We reserve the right to modify or discontinue products without prior notice.
+                Esforçamo-nos para fornecer informações precisas sobre os produtos, incluindo descrições, preços e disponibilidade. No entanto, não garantimos que as descrições dos produtos ou outros conteúdos sejam precisos, completos, confiáveis ou livres de erros. Reservamo-nos o direito de modificar ou descontinuar produtos sem aviso prévio.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Orders and Payment</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Pedidos e Pagamento</h2>
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-light text-foreground mb-2">Order Acceptance</h3>
+                  <h3 className="text-xl font-light text-foreground mb-2">Aceitação de Pedidos</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    All orders are subject to acceptance and availability. We reserve the right to refuse or cancel any order for any reason, including but not limited to product availability, errors in product information, or suspected fraud.
+                    Todos os pedidos estão sujeitos à aceitação e disponibilidade. Reservamo-nos o direito de recusar ou cancelar qualquer pedido por qualquer motivo, incluindo, mas não se limitando a, disponibilidade do produto, erros nas informações do produto ou suspeita de fraude.
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-light text-foreground mb-2">Payment Terms</h3>
+                  <h3 className="text-xl font-light text-foreground mb-2">Termos de Pagamento</h3>
                   <p className="text-muted-foreground leading-relaxed">
-                    Payment is due at the time of purchase. We accept major credit cards and other payment methods as displayed during checkout. All prices are in USD unless otherwise specified.
+                    O pagamento é devido no momento da compra. Aceitamos os principais cartões de crédito e outros métodos de pagamento conforme exibido durante o checkout. Todos os preços estão em USD, a menos que especificado de outra forma.
                   </p>
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Shipping and Delivery</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Envio e Entrega</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                We will make every effort to ship orders within the timeframes specified. However, delivery dates are estimates and we are not responsible for delays caused by shipping carriers or circumstances beyond our control.
+                Faremos todos os esforços para enviar os pedidos dentro dos prazos especificados. No entanto, as datas de entrega são estimativas e não somos responsáveis por atrasos causados por transportadoras ou circunstâncias fora do nosso controle.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Risk of loss and title for products pass to you upon delivery to the carrier. We are not responsible for lost, stolen, or damaged packages once they have been delivered to the address provided.
+                O risco de perda e o título dos produtos passam para você após a entrega à transportadora. Não somos responsáveis por pacotes perdidos, roubados ou danificados depois de terem sido entregues no endereço fornecido.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Returns and Exchanges</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Devoluções e Trocas</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                We want you to be completely satisfied with your purchase. Returns and exchanges are accepted within 30 days of delivery, subject to the following conditions:
+                Queremos que você esteja completamente satisfeito com sua compra. Devoluções e trocas são aceitas dentro de 30 dias após a entrega, sujeitas às seguintes condições:
               </p>
               <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                <li>Items must be in original condition and packaging</li>
-                <li>Custom or personalized items are final sale</li>
-                <li>Return shipping costs are the responsibility of the customer</li>
-                <li>Refunds will be processed to the original payment method</li>
+                <li>Os itens devem estar na condição e embalagem originais</li>
+                <li>Itens personalizados ou customizados são de venda final</li>
+                <li>Os custos de envio de devolução são de responsabilidade do cliente</li>
+                <li>Os reembolsos serão processados no método de pagamento original</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Warranty and Care</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Garantia e Cuidados</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Our jewelry comes with a limited warranty against manufacturing defects. This warranty does not cover damage from normal wear, improper care, or accidents. Proper care instructions are provided with each purchase and on our website.
+                Nossas joias vêm com uma garantia limitada contra defeitos de fabricação. Esta garantia não cobre danos decorrentes de desgaste normal, cuidado inadequado ou acidentes. Instruções de cuidados adequados são fornecidas com cada compra e em nosso site.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Intellectual Property</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Propriedade Intelectual</h2>
               <p className="text-muted-foreground leading-relaxed">
-                All content on this website, including but not limited to text, graphics, logos, images, and software, is the property of Linea Jewelry Inc. and is protected by copyright, trademark, and other intellectual property laws. Unauthorized use is prohibited.
+                Todo o conteúdo deste site, incluindo, mas não se limitando a, textos, gráficos, logotipos, imagens e software, é de propriedade da Linea Jewelry Inc. e está protegido por leis de direitos autorais, marcas registradas e outras leis de propriedade intelectual. O uso não autorizado é proibido.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Limitation of Liability</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Limitação de Responsabilidade</h2>
               <p className="text-muted-foreground leading-relaxed">
-                In no event shall Linea Jewelry Inc. or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on our website or products, even if we have been notified of the possibility of such damage.
+                Em hipótese alguma a Linea Jewelry Inc. ou seus fornecedores serão responsáveis por quaisquer danos (incluindo, sem limitação, danos por perda de dados ou lucro, ou devido à interrupção dos negócios) decorrentes do uso ou da incapacidade de usar os materiais em nosso site ou produtos, mesmo que tenhamos sido notificados da possibilidade de tais danos.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Privacy Policy</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Política de Privacidade</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Your privacy is important to us. Please review our Privacy Policy, which also governs your use of our website and services, to understand our practices regarding your personal information.
+                Sua privacidade é importante para nós. Por favor, revise nossa Política de Privacidade, que também rege o uso do nosso site e serviços, para entender nossas práticas em relação às suas informações pessoais.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Governing Law</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Lei Aplicável</h2>
               <p className="text-muted-foreground leading-relaxed">
-                These terms and conditions are governed by and construed in accordance with the laws of New York State, and you irrevocably submit to the exclusive jurisdiction of the courts in that state or location.
+                Estes termos e condições são regidos e interpretados de acordo com as leis do Estado de Nova York, e você se submete irrevogavelmente à jurisdição exclusiva dos tribunais naquele estado ou localidade.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Changes to Terms</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Alterações nos Termos</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We reserve the right to revise these Terms of Service at any time without notice. By using this website, you are agreeing to be bound by the current version of these Terms of Service.
+                Reservamo-nos o direito de revisar estes Termos de Serviço a qualquer momento sem aviso prévio. Ao usar este site, você concorda em estar vinculado à versão atual destes Termos de Serviço.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-light text-foreground mb-4">Contact Information</h2>
+              <h2 className="text-2xl font-light text-foreground mb-4">Informações de Contato</h2>
               <p className="text-muted-foreground leading-relaxed">
-                If you have any questions about these Terms of Service, please contact us at:
+                Se você tiver alguma dúvida sobre estes Termos de Serviço, entre em contato conosco em:
               </p>
               <div className="mt-4 text-muted-foreground">
-                <p>Email: legal@lineajewelry.com</p>
-                <p>Phone: (77) 98859-0306</p>
-                <p>Address: Av. Juracy Magalhães, 3340 - Quiosque 115, Boa Vista, Vitória da Conquista - BA</p>
+                <p>E-mail: legal@lineajewelry.com</p>
+                <p>Telefone: (77) 98859-0306</p>
+                <p>Endereço: Av. Juracy Magalhães, 3340 - Quiosque 115, Boa Vista, Vitória da Conquista - BA</p>
               </div>
             </section>
           </div>
