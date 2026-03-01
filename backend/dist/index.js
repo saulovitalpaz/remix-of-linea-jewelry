@@ -7,6 +7,13 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { uploadToCloudinary } from './utils/cloudinary.js';
 dotenv.config();
+// Prevent process from crashing on unhandled errors
+process.on('uncaughtException', (err) => {
+    console.error('[FATAL] Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[FATAL] Unhandled Rejection:', reason);
+});
 const app = express();
 const prisma = new PrismaClient();
 const upload = multer();
@@ -54,20 +61,32 @@ const authenticateAdmin = (req, res, next) => {
 };
 // --- Auth Routes ---
 app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body;
-    const admin = await prisma.adminUser.findUnique({ where: { email } });
-    if (admin && await bcrypt.compare(password, admin.passwordHash)) {
-        const token = jwt.sign({ id: admin.id }, JWT_SECRET, { expiresIn: '1d' });
-        res.json({ token });
+    try {
+        const { email, password } = req.body;
+        const admin = await prisma.adminUser.findUnique({ where: { email } });
+        if (admin && await bcrypt.compare(password, admin.passwordHash)) {
+            const token = jwt.sign({ id: admin.id }, JWT_SECRET, { expiresIn: '1d' });
+            res.json({ token });
+        }
+        else {
+            res.status(401).json({ error: 'Invalid credentials' });
+        }
     }
-    else {
-        res.status(401).json({ error: 'Invalid credentials' });
+    catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 // --- Category Routes ---
 app.get('/api/categories', async (req, res) => {
-    const categories = await prisma.category.findMany();
-    res.json(categories);
+    try {
+        const categories = await prisma.category.findMany();
+        res.json(categories);
+    }
+    catch (err) {
+        console.error('Categories error:', err);
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
 });
 app.post('/api/categories', authenticateAdmin, async (req, res) => {
     const { name, slug, description, emoji } = req.body;
@@ -83,12 +102,18 @@ app.post('/api/categories', authenticateAdmin, async (req, res) => {
 });
 // --- Product Routes ---
 app.get('/api/products', async (req, res) => {
-    const categorySlug = req.query.categorySlug;
-    const products = await prisma.product.findMany({
-        where: categorySlug ? { category: { slug: categorySlug } } : {},
-        include: { category: true }
-    });
-    res.json(products);
+    try {
+        const categorySlug = req.query.categorySlug;
+        const products = await prisma.product.findMany({
+            where: categorySlug ? { category: { slug: categorySlug } } : {},
+            include: { category: true }
+        });
+        res.json(products);
+    }
+    catch (err) {
+        console.error('Products error:', err);
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
 });
 app.post('/api/products', authenticateAdmin, upload.single('image'), async (req, res) => {
     const { name, price, description, categoryId, stock } = req.body;
@@ -160,13 +185,19 @@ app.put('/api/products/:id', authenticateAdmin, upload.single('image'), async (r
     }
 });
 app.get('/api/products/:id', async (req, res) => {
-    const product = await prisma.product.findUnique({
-        where: { id: req.params.id },
-        include: { category: true }
-    });
-    if (!product)
-        return res.status(404).json({ error: 'Product not found' });
-    res.json(product);
+    try {
+        const product = await prisma.product.findUnique({
+            where: { id: req.params.id },
+            include: { category: true }
+        });
+        if (!product)
+            return res.status(404).json({ error: 'Product not found' });
+        res.json(product);
+    }
+    catch (err) {
+        console.error('Product detail error:', err);
+        res.status(500).json({ error: 'Failed to fetch product' });
+    }
 });
 // Health check
 app.get('/api/health', (req, res) => {
@@ -211,17 +242,29 @@ app.post('/api/sales/close-day', authenticateAdmin, async (req, res) => {
 });
 // --- Marketing Popup Routes ---
 app.get('/api/popup/active', async (req, res) => {
-    const popup = await prisma.marketingPopup.findFirst({
-        where: { active: true },
-        orderBy: { updatedAt: 'desc' }
-    });
-    res.json(popup || null);
+    try {
+        const popup = await prisma.marketingPopup.findFirst({
+            where: { active: true },
+            orderBy: { updatedAt: 'desc' }
+        });
+        res.json(popup || null);
+    }
+    catch (err) {
+        console.error('Popup error:', err);
+        res.status(500).json({ error: 'Failed to fetch popup' });
+    }
 });
 app.get('/api/popup', authenticateAdmin, async (req, res) => {
-    const popups = await prisma.marketingPopup.findMany({
-        orderBy: { createdAt: 'desc' }
-    });
-    res.json(popups);
+    try {
+        const popups = await prisma.marketingPopup.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(popups);
+    }
+    catch (err) {
+        console.error('Popup list error:', err);
+        res.status(500).json({ error: 'Failed to fetch popups' });
+    }
 });
 app.post('/api/popup', authenticateAdmin, upload.single('image'), async (req, res) => {
     const file = req.file;
