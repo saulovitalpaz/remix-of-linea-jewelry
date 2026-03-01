@@ -9,13 +9,30 @@ import { uploadToCloudinary } from './utils/cloudinary.js';
 
 dotenv.config();
 
-// Prevent process from crashing on unhandled errors
+// === PROCESS DEATH DIAGNOSTICS ===
 process.on('uncaughtException', (err) => {
     console.error('[FATAL] Uncaught Exception:', err);
 });
 process.on('unhandledRejection', (reason) => {
     console.error('[FATAL] Unhandled Rejection:', reason);
 });
+process.on('exit', (code) => {
+    console.error(`[DEATH] Process exiting with code: ${code}`);
+});
+process.on('SIGTERM', () => {
+    console.error('[DEATH] Received SIGTERM');
+});
+process.on('SIGINT', () => {
+    console.error('[DEATH] Received SIGINT');
+});
+process.on('SIGUSR2', () => {
+    console.error('[DEATH] Received SIGUSR2');
+});
+
+// Keepalive: prevent Node from exiting due to empty event loop
+const keepalive = setInterval(() => {
+    // Silent keepalive - just keeps the process running
+}, 30000);
 
 const app = express();
 const prisma = new PrismaClient();
@@ -350,7 +367,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Start server FIRST, then seed admin in background
-app.listen(port, '0.0.0.0', () => {
+const server = app.listen(port, '0.0.0.0', () => {
     console.log(`[BOOT] Chique Detalhes API listening on 0.0.0.0:${port}`);
     console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
 
@@ -358,4 +375,11 @@ app.listen(port, '0.0.0.0', () => {
     seedAdmin()
         .then(() => console.log('[BOOT] Seed check completed.'))
         .catch(err => console.error('[BOOT] Seed failed:', err));
+});
+
+server.on('error', (err) => {
+    console.error('[SERVER] Server error:', err);
+});
+server.on('close', () => {
+    console.error('[SERVER] Server closed!');
 });
