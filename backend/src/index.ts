@@ -367,8 +367,10 @@ app.get('/health', (_req, res) => {
 });
 
 // Start server FIRST, then seed admin in background
-const server = app.listen(port, () => {
-    console.log(`[BOOT] Chique Detalhes API listening on port ${port}`);
+const server = app.listen(port, '::', () => {
+    const address = server.address();
+    const bindInfo = typeof address === 'string' ? address : `${address?.address}:${address?.port}`;
+    console.log(`[BOOT] Chique Detalhes API natively listening on ${bindInfo} (Dual Stack)`);
     console.log(`[BOOT] Environment: ${process.env.NODE_ENV || 'development'}`);
 
     // Run seed in background after server is confirmed UP
