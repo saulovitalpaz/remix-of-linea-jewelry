@@ -21,6 +21,7 @@ async function start() {
         console.warn('DB schema sync notice:', e instanceof Error ? e.message : e);
     }
     await upgradeCashFlow(prisma);
+    await prisma.$executeRawUnsafe('ALTER TABLE "Category" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;');
     const server = app.listen(port, '0.0.0.0', () => console.log(`API listening on port ${port}`));
     async function shutdown() {
         server.close(async () => { await prisma.$disconnect(); process.exit(0); });

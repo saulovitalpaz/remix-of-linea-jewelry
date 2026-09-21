@@ -24,6 +24,7 @@ model Category {
   slug        String   @unique
   description String?
   emoji       String?
+  imageUrl    String?
   products    Product[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -85,4 +86,3 @@ model MarketingPopup {
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
-

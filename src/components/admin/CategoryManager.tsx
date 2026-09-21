@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pencil, Trash2, Layers } from 'lucide-react';
 import type { CategoryModel } from '@/types/product';
 import { api, errorMessage } from '@/services/api';
 import CategoryIllustration from '@/components/CategoryIllustration';
-import { CATEGORY_ILLUSTRATIONS } from '@/lib/category-illustrations';
+import { categoryEmojiOptions } from '@/lib/category-illustrations';
 
 interface CategoryManagerProps {
   categories: CategoryModel[];
@@ -17,6 +17,17 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [emoji, setEmoji] = useState('💎');
+  const [image, setImage] = useState<File | null>(null);
+  const [savedImage, setSavedImage] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string>();
+  const [removeImage, setRemoveImage] = useState(false);
+  const imageInput = useRef<HTMLInputElement>(null);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  const selectImage = (file: File | null) => {
+    setImage(file);
+    setPreview(file ? URL.createObjectURL(file) : undefined);
+    if (!file && imageInput.current) imageInput.current.value = '';
+  };
   
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +39,9 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
     setSlug('');
     setDescription('');
     setEmoji('💎');
+    selectImage(null);
+    setSavedImage(null);
+    setRemoveImage(false);
     setError('');
   };
 
@@ -37,6 +51,9 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
     setSlug(cat.slug);
     setDescription(cat.description || '');
     setEmoji(cat.emoji || '💎');
+    selectImage(null);
+    setSavedImage(cat.imageUrl || null);
+    setRemoveImage(false);
     setError('');
     setMessage('');
   };
@@ -54,6 +71,8 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
     setName(val);
     if (!editingId) {
       setSlug(generateSlug(val));
+      const options = categoryEmojiOptions(generateSlug(val));
+      if (!options.some(option => option.emoji === emoji)) setEmoji(options[0].emoji);
     }
   };
 
@@ -65,16 +84,19 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
     setMessage('');
 
     try {
+      const body = new FormData();
+      for (const [key, value] of Object.entries({ name, slug, description, emoji, removeImage: String(removeImage) })) body.append(key, value);
+      if (image) body.append('image', image);
       if (editingId) {
         await api(`/categories/${editingId}`, {
           method: 'PUT',
-          body: JSON.stringify({ name, slug, description, emoji })
+          body
         }, true);
         setMessage('Categoria atualizada com sucesso!');
       } else {
         await api('/categories', {
           method: 'POST',
-          body: JSON.stringify({ name, slug, description, emoji })
+          body
         }, true);
         setMessage('Nova categoria adicionada com sucesso!');
       }
@@ -119,7 +141,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             Categorias & Ilustrações
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Organize as coleções e escolha uma ilustração 3D.
+            Organize as coleções com uma imagem sem fundo ou emoji.
           </p>
         </div>
         {editingId && (
@@ -165,18 +187,32 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             </div>
 
             <div>
-              <p id="illustration-label" className="block text-sm font-medium mb-2">Ilustração 3D</p>
+              <label htmlFor="category-image" className="block text-sm font-medium mb-2">Imagem da categoria</label>
+              <input ref={imageInput} id="category-image" type="file" accept="image/png,image/webp" className="field text-xs" disabled={busy} onChange={event => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (!['image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                  setError('Escolha PNG ou WebP de até 5 MB.'); event.target.value = ''; return;
+                }
+                setError(''); selectImage(file); setRemoveImage(false);
+              }} />
+              <p className="text-xs text-muted-foreground mt-2">PNG ou WebP de até 5 MB. A transparência do arquivo será preservada.</p>
+              {(preview || savedImage) && !removeImage && <div className="flex items-center gap-3 my-3">
+                <CategoryIllustration imageUrl={preview || savedImage} className="h-16 w-16" />
+                <button type="button" className="button-secondary text-xs" onClick={() => { selectImage(null); setRemoveImage(true); }}>Usar emoji</button>
+              </div>}
+              <p id="illustration-label" className="block text-sm font-medium my-2">Ou escolha um dos 5 emojis</p>
               <div className="flex flex-wrap gap-2 mb-2" role="group" aria-labelledby="illustration-label">
-                {CATEGORY_ILLUSTRATIONS.map(preset => (
+                {categoryEmojiOptions(slug).map(preset => (
                   <button
                     key={preset.emoji}
                     type="button"
-                    onClick={() => setEmoji(preset.emoji)}
+                    onClick={() => { setEmoji(preset.emoji); selectImage(null); setRemoveImage(true); }}
                     aria-label={preset.label}
-                    aria-pressed={emoji === preset.emoji}
+                    aria-pressed={emoji === preset.emoji && !(image || (savedImage && !removeImage))}
                     title={preset.label}
                     className={`h-12 w-12 rounded-lg border flex items-center justify-center transition-colors ${
-                      emoji === preset.emoji ? 'border-primary bg-primary/10 shadow-sm' : 'border-border bg-card hover:bg-muted'
+                      emoji === preset.emoji && !(image || (savedImage && !removeImage)) ? 'border-primary bg-primary/10 shadow-sm' : 'border-border bg-card hover:bg-muted'
                     }`}
                   >
                     <CategoryIllustration emoji={preset.emoji} />
@@ -224,38 +260,30 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
                 const canDelete = count === 0;
 
                 return (
-                  <li key={cat.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20">
+                  <li key={cat.id} className="px-3 py-2 flex items-center justify-between gap-2 hover:bg-muted/20">
                     <div className="flex items-start gap-3 min-w-0">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
-                        <CategoryIllustration emoji={cat.emoji} />
+                        <CategoryIllustration emoji={cat.emoji} imageUrl={cat.imageUrl} />
                       </span>
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h5 className="font-semibold truncate">{cat.name}</h5>
-                          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                            /{cat.slug}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                          {cat.description || 'Sem descrição'}
-                        </p>
-                        <p className="text-[11px] font-medium text-primary mt-1">
-                          {count} produto(s) cadastrado(s)
-                        </p>
+                        <h5 className="font-semibold truncate" title={cat.name}>{cat.name}</h5>
+                        <p className="text-xs text-muted-foreground truncate" title={cat.description || cat.slug}>{count} produtos · {cat.description || `/${cat.slug}`}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => startEdit(cat)}
                         className="icon-button"
                         title="Editar categoria"
+                        aria-label={`Editar ${cat.name}`}
                       >
                         <Pencil size={16} />
                       </button>
                       <button
                         onClick={() => handleDelete(cat)}
                         disabled={busy || !canDelete}
+                        aria-label={`Excluir ${cat.name}`}
                         className={`icon-button ${canDelete ? 'text-destructive hover:bg-destructive/10' : 'text-muted-foreground opacity-40 cursor-not-allowed'}`}
                         title={canDelete ? 'Excluir categoria' : 'Não é possível excluir: possui produtos vinculados'}
                       >

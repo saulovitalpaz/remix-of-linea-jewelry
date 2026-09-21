@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -39,6 +40,8 @@ interface CashFlowManagerProps {
 type PeriodMode = 'daily' | 'weekly' | 'monthly' | 'custom';
 
 export default function CashFlowManager({ user }: CashFlowManagerProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const salesOnly = searchParams.get('category') === 'SALE';
   const [data, setData] = useState<CashFlowData>({
     summary: { totalInflows: 0, totalOutflows: 0, netBalance: 0, salesTotal: 0, transactionCount: 0 },
     transactions: [],
@@ -50,9 +53,9 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
   const [message, setMessage] = useState('');
 
   // Period filters
-  const [periodMode, setPeriodMode] = useState<PeriodMode>('daily');
+  const [periodMode, setPeriodMode] = useState<PeriodMode>(searchParams.get('period') === 'monthly' ? 'monthly' : 'daily');
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [selectedMonth, setSelectedMonth] = useState(() => /^\d{4}-(0[1-9]|1[0-2])$/.test(searchParams.get('month') || '') ? searchParams.get('month')! : new Date().toISOString().slice(0, 7));
   const [customStart, setCustomStart] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -122,7 +125,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
       periodLabel: `Período (${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')})`,
     };
   }, [periodMode, selectedDate, selectedMonth, customStart, customEnd]);
-  const periodKey = `${startDate}:${endDate}`;
+  const periodKey = `${startDate}:${endDate}:${salesOnly}`;
   const loading = refreshing || loadedPeriod !== periodKey;
 
   async function loadData() {
@@ -132,6 +135,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
       const params = new URLSearchParams();
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
+      if (salesOnly) { params.set('category', 'SALE'); params.set('type', 'INFLOW'); }
       const res = await api<CashFlowData>(`/cash-flow?${params.toString()}`, {}, true);
       setData(res);
     } catch (err) {
@@ -145,12 +149,13 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
   useEffect(() => {
     let live = true;
     const params = new URLSearchParams({ startDate, endDate });
+    if (salesOnly) { params.set('category', 'SALE'); params.set('type', 'INFLOW'); }
     api<CashFlowData>(`/cash-flow?${params}`, {}, true)
       .then(result => { if (live) { setData(result); setError(''); } })
       .catch(err => { if (live) setError(errorMessage(err)); })
       .finally(() => { if (live) { setLoading(false); setLoadedPeriod(periodKey); } });
     return () => { live = false; };
-  }, [startDate, endDate, periodKey]);
+  }, [startDate, endDate, periodKey, salesOnly]);
 
   async function handleCreateTransaction(e: React.FormEvent) {
     e.preventDefault();
@@ -212,6 +217,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
 
   return (
     <div className="space-y-6 animate-fade-in" aria-label="Fluxo de Caixa">
+      {salesOnly && <div className="flex items-center justify-between gap-3 rounded-xl bg-primary/5 p-3"><span>Exibindo somente entradas de vendas</span><button className="button-secondary" onClick={() => setSearchParams({ tab: 'cashflow' })}>Ver todas as movimentações</button></div>}
       {/* Top Banner & Action Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -467,87 +473,30 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
             Nenhuma movimentação registrada no período selecionado.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="responsive-table w-full text-left text-sm">
-              <thead className="border-b border-border bg-muted/60 font-semibold text-xs">
-                <tr>
-                  <th scope="col" className="p-4">Data / Hora</th>
-                  <th scope="col" className="p-4">Tipo</th>
-                  <th scope="col" className="p-4">Categoria</th>
-                  <th scope="col" className="p-4">Descrição</th>
-                  <th scope="col" className="p-4">Pagamento</th>
-                  <th scope="col" className="p-4">Usuário Responsável</th>
-                  <th scope="col" className="p-4 text-right">Valor</th>
-                  {user.role === 'ADMIN' && <th scope="col" className="p-4 text-center">Ações</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {data.transactions.map(t => {
-                  const dt = new Date(t.date);
-                  const isPositive = t.type === 'INFLOW';
-                  return (
-                    <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                      <td data-label="Data" className="p-4 whitespace-nowrap tabular-nums text-xs">
-                        <div className="font-medium">{dt.toLocaleDateString('pt-BR')}</div>
-                        <div className="text-[10px] text-muted-foreground">
-                          {dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td data-label="Tipo" className="p-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          isPositive 
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-                            : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                        }`}>
-                          {isPositive ? 'Entrada' : 'Saída'}
-                        </span>
-                      </td>
-                      <td data-label="Categoria" className="p-4 whitespace-nowrap text-xs font-medium">
-                        {CATEGORY_LABELS[t.category] || t.category}
-                      </td>
-                      <td data-label="Descrição" className="p-4 max-w-[240px]">
-                        <div className="font-medium text-xs truncate" title={t.description}>
-                          {t.description}
-                        </div>
-                        {t.notes && (
-                          <div className="text-[11px] text-muted-foreground truncate" title={t.notes}>
-                            {t.notes}
-                          </div>
-                        )}
-                      </td>
-                      <td data-label="Pagamento" className="p-4 whitespace-nowrap text-xs text-muted-foreground">
-                        {t.paymentMethod ? (PAYMENT_METHOD_LABELS[t.paymentMethod] || t.paymentMethod) : '-'}
-                      </td>
-                      <td data-label="Responsável" className="p-4 whitespace-nowrap text-xs">
-                        <div className="font-semibold text-foreground">{t.userName}</div>
-                        <div className="text-[10px] text-muted-foreground">
-                          {ROLE_LABELS[t.userRole as Role] || t.userRole}
-                        </div>
-                      </td>
-                      <td data-label="Valor" className={`p-4 text-right whitespace-nowrap font-bold tabular-nums text-sm ${
-                        isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
-                      }`}>
-                        {isPositive ? '+' : '-'}{formatCurrency(t.amount)}
-                      </td>
-                      {user.role === 'ADMIN' && (
-                        <td data-label="Ações" className="p-4 text-center whitespace-nowrap">
-                          <button
-                            onClick={() => handleDeleteTransaction(t.id, t.category === 'SALE')}
-                            disabled={busy}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                            title={t.category === 'SALE' ? "Excluir entrada de venda" : "Excluir lançamento"}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      )}
-
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ul className="divide-y divide-border">
+            {data.transactions.map(t => {
+              const isPositive = t.type === 'INFLOW';
+              const dt = new Date(t.date);
+              return <li key={t.id} className="flex items-start gap-1 px-3 sm:px-5 hover:bg-muted/20">
+                <details className="cash-entry min-w-0 flex-1">
+                  <summary className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 py-2 focus-visible:outline-primary">
+                    <span className="truncate font-medium" title={t.description}>{t.description}</span>
+                    <span className={`row-span-2 font-semibold tabular-nums whitespace-nowrap ${isPositive ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive'}`}>{isPositive ? '+' : '−'}{formatCurrency(t.amount)}</span>
+                    <span className="truncate text-xs text-muted-foreground">{dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} · {dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · {CATEGORY_LABELS[t.category]} · {t.userName}</span>
+                  </summary>
+                  <dl className="grid gap-2 pb-4 text-sm sm:grid-cols-2">
+                    <div><dt className="text-muted-foreground">Descrição</dt><dd>{t.description}</dd></div>
+                    <div><dt className="text-muted-foreground">Tipo / categoria</dt><dd>{TYPE_LABELS[t.type]} · {CATEGORY_LABELS[t.category]}</dd></div>
+                    <div><dt className="text-muted-foreground">Pagamento</dt><dd>{t.paymentMethod ? PAYMENT_METHOD_LABELS[t.paymentMethod] : 'Não informado'}</dd></div>
+                    <div><dt className="text-muted-foreground">Responsável</dt><dd>{t.userName} · {ROLE_LABELS[t.userRole as Role] || t.userRole}</dd></div>
+                    <div><dt className="text-muted-foreground">Data</dt><dd>{dt.toLocaleString('pt-BR')}</dd></div>
+                    {t.notes && <div><dt className="text-muted-foreground">Observações</dt><dd>{t.notes}</dd></div>}
+                  </dl>
+                </details>
+                {user.role === 'ADMIN' && <button type="button" disabled={busy} onClick={() => handleDeleteTransaction(t.id, t.category === 'SALE')} className="icon-button mt-1 text-muted-foreground hover:text-destructive" aria-label={`Excluir lançamento: ${t.description}`}><Trash2 size={16} /></button>}
+              </li>;
+            })}
+          </ul>
         )}
       </div>
 

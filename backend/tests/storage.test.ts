@@ -41,9 +41,14 @@ test('private bucket upload and public image delivery work without frontend cred
   const secret = 'storage-test-secret-at-least-32-characters';
   const db = {
     adminUser: { findUnique: async ({ where }: { where: { id: string } }) => ({ id: where.id, name: where.id, role: where.id }) },
-    category: { findFirst: async () => ({ id: 'category' }) },
+    category: {
+      findFirst: async () => ({ id: 'category' }),
+      create: async ({ data }: { data: Record<string, unknown> }) => { categoryRecord = { id: 'category', ...data }; return categoryRecord; },
+      update: async ({ data }: { data: Record<string, unknown> }) => { categoryRecord = { ...categoryRecord, ...data }; return categoryRecord; },
+    },
     product: { create: async ({ data }: { data: object }) => ({ id: 'product', ...data }) },
   } as unknown as PrismaClient;
+  let categoryRecord: Record<string, unknown> = {};
   const server = createApp({ prisma: db, jwtSecret: secret, uploadImage: uploadToObjectStorage, readImage: readFromObjectStorage }).listen(0, '127.0.0.1');
   await once(server, 'listening');
   const apiAddress = server.address();
@@ -71,6 +76,29 @@ test('private bucket upload and public image delivery work without frontend cred
       assert.deepEqual(Buffer.from(await image.arrayBuffer()), png);
     }
     assert.equal((await fetch(base + '/api/images/private/secret.txt')).status, 404);
+    const categoryForm = () => {
+      const body = new FormData();
+      body.set('name', 'Bolsas'); body.set('slug', 'bolsas'); body.set('emoji', '👜');
+      body.set('image', new Blob([png], { type: 'image/png' }), 'category.png');
+      return body;
+    };
+    const auth = (role = 'ADMIN') => ({ Authorization: `Bearer ${jwt.sign({ id: role }, secret, { audience: 'chique-admin', issuer: 'chique-api' })}` });
+    assert.equal((await fetch(base + '/api/categories', { method: 'POST', headers: auth('SELLER'), body: categoryForm() })).status, 403);
+    const createdCategory = await fetch(base + '/api/categories', { method: 'POST', headers: auth(), body: categoryForm() });
+    assert.equal(createdCategory.status, 201);
+    const category = await createdCategory.json();
+    const uploaded = await fetch(base + category.imageUrl);
+    assert.deepEqual(Buffer.from(await uploaded.arrayBuffer()), png, 'category uploads preserve the original transparent PNG bytes');
+    const updateCategory = (removeImage = false) => fetch(base + '/api/categories/category', {
+      method: 'PUT', headers: { ...auth(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Bolsas novas', slug: 'bolsas', emoji: '👛', ...(removeImage ? { removeImage: 'true' } : {}) }),
+    });
+    const preserved = await updateCategory();
+    assert.equal(preserved.status, 200);
+    assert.equal((await preserved.json()).imageUrl, category.imageUrl, 'editing text preserves the image');
+    const removed = await updateCategory(true);
+    assert.equal(removed.status, 200);
+    assert.equal((await removed.json()).imageUrl, null, 'choosing an emoji removes the image');
   } finally {
     for (const [key, value] of Object.entries(previous)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
     server.closeAllConnections(); bucket.closeAllConnections();

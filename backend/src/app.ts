@@ -97,22 +97,24 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
     res.status(201).json(safeUser(await prisma.adminUser.create({ data: { name, username, role, passwordHash } })));
   });
   app.get('/api/categories', async (_req, res) => res.json(await prisma.category.findMany({ include: { _count: { select: { products: true } } }, orderBy: { name: 'asc' } })));
-  app.post('/api/categories', ...manage, async (req, res) => {
+  app.post('/api/categories', ...manage, upload.single('image'), async (req, res) => {
     const name = text(req.body?.name, 'Nome');
     const slug = text(req.body?.slug, 'Identificador', 80);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new HttpError(400, 'Identificador de categoria inválido.');
     const description = req.body?.description ? text(req.body.description, 'Descrição', 2000) : '';
     const emoji = req.body?.emoji ? String(req.body.emoji).trim().slice(0, 30) : null;
-    res.status(201).json(await prisma.category.create({ data: { name, slug, description, emoji } }));
+    const image = req.file ? await imageUrl(req.file) : null;
+    res.status(201).json(await prisma.category.create({ data: { name, slug, description, emoji, imageUrl: image } }));
   });
-  app.put('/api/categories/:id', ...manage, async (req, res) => {
+  app.put('/api/categories/:id', ...manage, upload.single('image'), async (req, res) => {
     const id = String(req.params.id);
     const name = text(req.body?.name, 'Nome');
     const slug = text(req.body?.slug, 'Identificador', 80);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new HttpError(400, 'Identificador de categoria inválido.');
     const description = req.body?.description ? text(req.body.description, 'Descrição', 2000) : '';
     const emoji = req.body?.emoji ? String(req.body.emoji).trim().slice(0, 30) : null;
-    res.json(await prisma.category.update({ where: { id }, data: { name, slug, description, emoji } }));
+    const image = req.file ? { imageUrl: await imageUrl(req.file) } : req.body?.removeImage === 'true' ? { imageUrl: null } : {};
+    res.json(await prisma.category.update({ where: { id }, data: { name, slug, description, emoji, ...image } }));
   });
   app.delete('/api/categories/:id', ...manage, async (req, res) => {
     const id = String(req.params.id);

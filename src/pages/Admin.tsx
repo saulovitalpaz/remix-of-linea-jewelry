@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, Package, Settings as SettingsIcon, Receipt, LogOut, Plus, Pencil, Trash2, Layers, Star, ImageIcon, X, Check, CircleDollarSign, Download } from 'lucide-react';
 import Settings from '@/components/admin/Settings';
 import AdminDashboard from '@/components/admin/AdminDashboard';
@@ -64,8 +64,13 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
-  const [tab, setTab] = useState('');
-  const [productSection, setProductSection] = useState<'products' | 'categories'>('products');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || '';
+  const setTab = (value: string) => setSearchParams(value ? { tab: value } : {});
+  const stockFilter = ['out', 'available'].includes(searchParams.get('stock') || '') ? searchParams.get('stock')! : 'all';
+  const displayedProducts = products.filter(product => tab !== 'products' || stockFilter === 'all' || (stockFilter === 'out' ? product.stock === 0 : product.stock > 0));
+  const productSection = searchParams.get('section') === 'categories' ? 'categories' : 'products';
+  const setProductSection = (section: 'products' | 'categories') => setSearchParams({ tab: 'products', section });
   const [draft, setDraft] = useState<Draft | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>();
@@ -304,7 +309,7 @@ export default function Admin() {
         {activeTab === 'dashboard' && user.role === 'ADMIN' && <div className="mb-6 flex flex-wrap items-start justify-between gap-4 sm:mb-8">
           <div>
             <p className="mb-2 text-sm text-muted-foreground">{ROLE_LABELS[user.role]}</p>
-            <h1 className="text-2xl sm:text-3xl">Olá, {user.name}</h1>
+            <h1 className="text-2xl sm:text-3xl">{new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite'}, {user.name}</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Visão geral do catálogo, estoque e vendas da loja.
             </p>
@@ -551,7 +556,12 @@ export default function Admin() {
 
             {loading ? <p role="status">Carregando produtos…</p> : !products.length ? <div className="status-panel">Nenhum produto cadastrado.</div> : (
               <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-                <table className="responsive-table w-full text-left text-sm">
+                {activeTab === 'products' && <label className="flex items-center gap-3 px-4 py-2 text-sm">Estoque
+                  <select className="field w-auto" value={stockFilter} onChange={event => setSearchParams({ tab: 'products', stock: event.target.value })}>
+                    <option value="all">Todos os produtos</option><option value="available">Com estoque</option><option value="out">Esgotados</option>
+                  </select>
+                </label>}
+                <table className="responsive-table inventory-table w-full text-left text-sm">
                   <caption className="sr-only">Produtos, preços, estoque e ações</caption>
                   <thead className="border-b border-border bg-muted">
                     <tr>
@@ -563,7 +573,8 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {products.map(product => (
+                    {!displayedProducts.length && <tr><td colSpan={5} className="p-4 text-muted-foreground">Nenhum produto neste filtro.</td></tr>}
+                    {displayedProducts.map(product => (
                       <tr key={product.id} className="hover:bg-muted/20">
                         {activeTab === 'products' && (
                           <td data-label="Destaque" className="p-4 text-center">
@@ -587,9 +598,9 @@ export default function Admin() {
                                 {product.name.charAt(0)}
                               </div>
                             )}
-                            <div>
-                              <Link className="font-medium hover:underline" to={'/product/' + product.id}>{product.name}</Link>
-                              <p className="mt-0.5 text-xs text-muted-foreground">
+                            <div className="min-w-0">
+                              <Link className="block truncate font-medium hover:underline" title={product.name} to={'/product/' + product.id}>{product.name}</Link>
+                              <p className="truncate mt-0.5 text-xs text-muted-foreground">
                                 {typeof product.category === 'object' ? product.category.name : product.category}
                               </p>
                             </div>
@@ -598,7 +609,7 @@ export default function Admin() {
                         <td data-label="Preço" className="whitespace-nowrap p-4 tabular-nums font-semibold">{formatCurrency(product.price)}</td>
                         <td data-label="Estoque" className="p-4 tabular-nums">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${product.stock > 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
-                            {product.stock} un.
+                            {product.stock === 0 ? 'Esgotado' : `${product.stock} un.`}
                           </span>
                         </td>
                         <td data-label={activeTab === 'sales' ? 'Quantidade vendida' : 'Ações'} className="p-4">

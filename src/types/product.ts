@@ -21,6 +21,7 @@ export interface CategoryModel {
     slug: string;
     description?: string | null;
     emoji?: string | null;
+    imageUrl?: string | null;
     icon?: string | null;
     _count?: { products: number };
 }

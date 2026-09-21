@@ -17,7 +17,7 @@ export const ProductService = {
     const categories = await api<CategoryModel[]>('/categories');
     return categories.map(category => ({
       ...category,
-      icon: categoryIllustration(category.emoji) || CATEGORIES_DATA[category.slug as keyof typeof CATEGORIES_DATA]?.icon,
+      icon: category.imageUrl || (category.emoji ? categoryIllustration(category.emoji) : CATEGORIES_DATA[category.slug as keyof typeof CATEGORIES_DATA]?.icon),
     }));
   },
   getActivePopup: () => api<MarketingPopup | null>('/popup/active'),

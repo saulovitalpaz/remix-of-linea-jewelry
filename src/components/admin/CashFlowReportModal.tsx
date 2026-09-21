@@ -1,4 +1,6 @@
 import { X, Printer, Download, Calendar, DollarSign, ArrowDownRight, ArrowUpRight, UserCheck } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { useEffect, useRef } from 'react';
 import type { CashFlowData } from '@/types/cashFlow';
 import { CATEGORY_LABELS, TYPE_LABELS, PAYMENT_METHOD_LABELS } from '@/types/cashFlow';
 import { ROLE_LABELS } from '@/types/admin';
@@ -19,12 +21,30 @@ export default function CashFlowReportModal({
   onClose,
 }: CashFlowReportModalProps) {
   const { summary, transactions } = data;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    dialog?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab' || !dialog) return;
+      const items = Array.from(dialog.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]'));
+      const first = items[0]; const last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => { document.removeEventListener('keydown', handleKey); previous?.focus(); };
+  }, [onClose]);
   const emissionDate = new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'medium',
   }).format(new Date());
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    await document.fonts.ready;
+    await Promise.all(Array.from(document.querySelectorAll<HTMLImageElement>('.cash-report img')).map(img => img.decode().catch(() => {})));
     window.print();
   };
 
@@ -79,8 +99,8 @@ export default function CashFlowReportModal({
     document.body.removeChild(link);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 backdrop-blur-sm print:static print:bg-transparent print:p-0">
+  return createPortal(
+    <div ref={dialogRef} tabIndex={-1} className="cash-report admin-shell fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 backdrop-blur-sm print:static print:bg-transparent print:p-0" role="dialog" aria-modal="true" aria-label="Relatório de caixa">
       <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl border border-border bg-card shadow-2xl print:max-h-none print:border-none print:shadow-none print:w-full">
         {/* Modal Toolbar - Hidden during print */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4 print:hidden">
@@ -107,6 +127,7 @@ export default function CashFlowReportModal({
             </button>
             <button
               onClick={onClose}
+              aria-label="Fechar relatório"
               className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
               title="Fechar"
             >
@@ -116,16 +137,16 @@ export default function CashFlowReportModal({
         </div>
 
         {/* Printable Report Content */}
-        <div className="overflow-y-auto p-6 sm:p-8 space-y-6 print:p-0 print:overflow-visible">
+        <div className="cash-report-content overflow-y-auto p-6 sm:p-8 space-y-6 print:p-0 print:overflow-visible">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6 gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <img src="/Logo 1.png" alt="Chique Detalhes" className="h-10 w-auto object-contain" />
+                <img src="/Logo 1.png" alt="Chique Detalhes" width={100} height={50} className="h-12 w-24 object-contain" />
                 <div>
                   <h1 className="text-xl font-bold tracking-tight">Chique Detalhes</h1>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                    Relatório Financeiro & Fluxo de Caixa
+                    <Printer size={14} className="inline-block mr-1" aria-hidden="true" />Relatório de caixa
                   </p>
                 </div>
               </div>
@@ -268,6 +289,11 @@ export default function CashFlowReportModal({
             )}
           </div>
 
+          <section className="report-notes rounded-xl border border-border p-4" aria-label="Observações para preenchimento manual">
+            <h2 className="text-sm font-semibold">Observações / conferência de caixa</h2>
+            <p className="text-xs text-muted-foreground">Preenchimento manual após a impressão.</p>
+            <div className="h-7 border-b border-border" /><div className="h-7 border-b border-border" /><div className="h-7 border-b border-border" /><div className="h-7 border-b border-border" />
+          </section>
           {/* Report Footer / Signature lines for physical printing */}
           <div className="hidden print:flex justify-between pt-16 text-xs text-center border-t border-border mt-12">
             <div className="w-56">
@@ -281,6 +307,6 @@ export default function CashFlowReportModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>, document.body
   );
 }
