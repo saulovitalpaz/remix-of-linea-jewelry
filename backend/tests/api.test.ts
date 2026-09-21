@@ -41,10 +41,24 @@ test('HTTP authorization, validation, stock and authentication', { skip: !create
         return { count: 1 };
       },
     },
-    dailySales: { create: async ({ data }: { data: object }) => data },
+    dailySales: { create: async ({ data }: { data: object }) => ({ id: 'ds1', ...data }) },
+    cashTransaction: {
+      create: async ({ data }: { data: any }) => {
+        const item = { id: 'ctx-' + (cashTransactions.length + 1), createdAt: new Date(), ...data };
+        cashTransactions.push(item);
+        return item;
+      },
+      findMany: async () => cashTransactions,
+      findUnique: async ({ where }: { where: { id: string } }) => cashTransactions.find(t => t.id === where.id) ?? null,
+      delete: async ({ where }: { where: { id: string } }) => {
+        const idx = cashTransactions.findIndex(t => t.id === where.id);
+        if (idx >= 0) cashTransactions.splice(idx, 1);
+      }
+    },
     $transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn(db),
   };
-  const app = createApp!({ prisma: db, jwtSecret: secret, uploadImage: async () => 'https://example.com/image.png' });
+  const cashTransactions: any[] = [];
+  const app = createApp!({ prisma: db as any, jwtSecret: secret, uploadImage: async () => 'https://example.com/image.png' });
   const server = app.listen(0, '127.0.0.1');
   await new Promise<void>(resolve => server.once('listening', resolve));
   const address = server.address();
@@ -70,15 +84,76 @@ test('HTTP authorization, validation, stock and authentication', { skip: !create
     assert.equal((await request('/auth/login', 'POST', undefined, { username: 'private@example.com', password: 'a-test-password' })).status, 200);
     assert.equal((await request('/auth/login', 'POST', undefined, { username: {}, password: [] })).status, 400);
     assert.equal((await request('/products', 'POST', 'manager', { name: 'Produto', price: -1, stock: 2, categoryId: 'x' })).status, 400);
+
+    // Sales and retroactive date tests
+    // Seller attempting retroactive sale should fail with 403
+    const sellerRetro = await request('/sales/close-day', 'POST', 'seller', {
+      itemsSoldData: [{ productId: 'p1', quantity: 1 }],
+      date: '2026-01-15T12:00:00.000Z'
+    });
+    assert.equal(sellerRetro.status, 403);
+
     assert.equal((await request('/sales/close-day', 'POST', 'seller', { itemsSoldData: [{ productId: 'p1', quantity: -2 }] })).status, 400);
     assert.equal((await request('/sales/close-day', 'POST', 'seller', { itemsSoldData: [{ productId: 'p1', quantity: 3 }] })).status, 409);
+    
+    // Seller making today's sale succeeds
     const sale = await request('/sales/close-day', 'POST', 'seller', { itemsSoldData: [{ productId: 'p1', quantity: 2, priceAtSale: 0.01 }] });
     assert.equal(sale.status, 201);
     assert.equal((await sale.json()).totalRevenue, 39.8);
     assert.equal(stock, 0);
     assert.equal((await request('/sales/close-day', 'POST', 'seller', { itemsSoldData: [{ productId: 'p1', quantity: 1 }] })).status, 409);
+
+    // Verify cash transaction was automatically created with seller attribution
+    assert.equal(cashTransactions.length, 1);
+    assert.equal(cashTransactions[0].type, 'INFLOW');
+    assert.equal(cashTransactions[0].category, 'SALE');
+    assert.equal(cashTransactions[0].amount, 39.8);
+    assert.equal(cashTransactions[0].userName, 'Vendedor');
+    assert.equal(cashTransactions[0].userRole, 'SELLER');
+
+    // Admin making retroactive sale succeeds
+    stock = 5;
+    const adminRetro = await request('/sales/close-day', 'POST', 'admin', {
+      itemsSoldData: [{ productId: 'p1', quantity: 1 }],
+      date: '2026-01-15T12:00:00.000Z'
+    });
+    assert.equal(adminRetro.status, 201);
+    assert.equal(cashTransactions.length, 2);
+    assert.equal(cashTransactions[1].userName, 'Bárbara Paz');
+    assert.equal(cashTransactions[1].userRole, 'ADMIN');
+
+    // Cash flow endpoints tests
+    // Seller cannot access cash flow (403)
+    assert.equal((await request('/cash-flow', 'GET', 'seller')).status, 403);
+
+    // Admin / Manager can access cash flow
+    const cfRes = await request('/cash-flow', 'GET', 'admin');
+    assert.equal(cfRes.status, 200);
+    const cfData = await cfRes.json();
+    assert.equal(cfData.summary.transactionCount, 2);
+    assert.equal(cfData.summary.salesTotal, 59.7);
+
+    // Manual withdrawal / expense
+    const expenseRes = await request('/cash-flow', 'POST', 'manager', {
+      type: 'OUTFLOW',
+      category: 'EXPENSE',
+      amount: 15.50,
+      description: 'Embalagens para joias',
+      paymentMethod: 'PIX'
+    });
+    assert.equal(expenseRes.status, 201);
+    const expData = await expenseRes.json();
+    assert.equal(expData.amount, 15.50);
+    assert.equal(expData.userName, 'Gerente');
+    assert.equal(expData.userRole, 'MANAGER');
+
+    // Cash flow balance after expense
+    const cfUpdated = await (await request('/cash-flow', 'GET', 'admin')).json();
+    assert.equal(cfUpdated.summary.totalOutflows, 15.50);
+    assert.equal(cfUpdated.summary.netBalance, 44.20);
   } finally {
     server.closeAllConnections();
     await new Promise<void>(resolve => server.close(() => resolve()));
   }
+
 });

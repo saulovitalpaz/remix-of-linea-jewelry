@@ -13,6 +13,8 @@ async function start() {
         await prisma.$executeRawUnsafe('ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "role" TEXT NOT NULL DEFAULT \'SELLER\';');
         await prisma.$executeRawUnsafe('UPDATE "AdminUser" SET "name" = COALESCE("name", "email"), "username" = lower(trim("email")), "role" = \'ADMIN\' WHERE "username" IS NULL;');
         await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_username_key" ON "AdminUser"("username");');
+        await prisma.$executeRawUnsafe('ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "featured" BOOLEAN NOT NULL DEFAULT false;');
+        await prisma.$executeRawUnsafe('ALTER TABLE "Category" ADD COLUMN IF NOT EXISTS "emoji" TEXT;');
     }
     catch (e) {
         console.warn('DB schema sync notice:', e instanceof Error ? e.message : e);

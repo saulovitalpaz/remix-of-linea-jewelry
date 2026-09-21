@@ -45,12 +45,37 @@ model Product {
 }
 
 model DailySales {
-  id           String   @id @default(uuid())
-  date         DateTime @default(now())
-  totalRevenue Float
-  itemsSold    Int
-  notes        String?
-  createdAt    DateTime @default(now())
+  id               String            @id @default(uuid())
+  date             DateTime          @default(now())
+  totalRevenue     Float
+  itemsSold        Int
+  notes            String?
+  userId           String?
+  userName         String?
+  createdAt        DateTime          @default(now())
+  cashTransactions CashTransaction[]
+}
+
+model CashTransaction {
+  id            String      @id @default(uuid())
+  type          String      // 'INFLOW' | 'OUTFLOW'
+  category      String      // 'SALE' | 'EXPENSE' | 'WITHDRAWAL' | 'SUPPLY' | 'OTHER'
+  amount        Float
+  description   String
+  date          DateTime    @default(now())
+  paymentMethod String?     // 'DINHEIRO' | 'PIX' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'OUTRO'
+  notes         String?
+  userId        String?
+  userName      String
+  userRole      String
+  dailySalesId  String?
+  dailySales    DailySales? @relation(fields: [dailySalesId], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([date])
+  @@index([type])
+  @@index([userId])
 }
 
 model MarketingPopup {
@@ -60,3 +85,4 @@ model MarketingPopup {
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
+

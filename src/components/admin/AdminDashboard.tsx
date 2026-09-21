@@ -12,8 +12,10 @@ import {
   Sparkles,
   ArrowRight,
   TrendingUp,
-  Store
+  Store,
+  CircleDollarSign
 } from 'lucide-react';
+
 import type { Product, CategoryModel } from '@/types/product';
 import type { AdminUser } from '@/types/admin';
 import { formatCurrency } from '@/lib/format';
@@ -112,8 +114,28 @@ export default function AdminDashboard({ user, products, categories, onNavigate,
           <TrendingUp size={18} className="text-primary" />
           Ações Principais & Atalhos de Gerenciamento
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Shortcut 1: Fast Sales */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Shortcut 1: Cash Flow */}
+          <div 
+            onClick={() => onNavigate('cashflow')}
+            className="group cursor-pointer rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <CircleDollarSign size={24} />
+              </div>
+              <ArrowRight size={18} className="text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">Fluxo de Caixa</h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Visualizar entradas, saídas, despesas, saldo e emitir relatórios financeiros.
+            </p>
+            <span className="inline-flex items-center text-xs font-semibold text-primary">
+              Acessar fluxo de caixa &rarr;
+            </span>
+          </div>
+
+          {/* Shortcut 2: Fast Sales */}
           <div 
             onClick={() => onNavigate('sales')}
             className="group cursor-pointer rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md"
@@ -133,7 +155,7 @@ export default function AdminDashboard({ user, products, categories, onNavigate,
             </span>
           </div>
 
-          {/* Shortcut 2: Manage Products */}
+          {/* Shortcut 3: Manage Products */}
           <div 
             onClick={() => onNavigate('products')}
             className="group cursor-pointer rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md"
@@ -153,7 +175,7 @@ export default function AdminDashboard({ user, products, categories, onNavigate,
             </span>
           </div>
 
-          {/* Shortcut 3: System Settings */}
+          {/* Shortcut 4: System Settings */}
           <div 
             onClick={() => onNavigate('settings')}
             className="group cursor-pointer rounded-2xl border border-border bg-card p-6 transition-all hover:border-primary/50 hover:shadow-md"
@@ -173,6 +195,7 @@ export default function AdminDashboard({ user, products, categories, onNavigate,
             </span>
           </div>
         </div>
+
       </div>
 
       {/* Additional Management Widgets */}

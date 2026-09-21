@@ -5,7 +5,7 @@ import type { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
-import { HttpError, text, number, normalizeUsername, roles, salesItems } from './validation.js';
+import { HttpError, text, number, normalizeUsername, roles, salesItems, validateSaleDate, validateTransaction } from './validation.js';
 import type { Role } from './validation.js';
 
 interface Dependencies { prisma: PrismaClient; jwtSecret: string; uploadImage: (buffer: Buffer, contentType?: string) => Promise<string> }
@@ -157,8 +157,11 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     await prisma.product.deleteMany({ where: { id: String(req.params.id) } }); res.status(204).end();
   });
   app.post('/api/sales/close-day', authenticate, permit(...roles), async (req, res) => {
+    const user = res.locals.user;
     const items = salesItems(req.body?.itemsSoldData);
     const notes = req.body.notes ? text(req.body.notes, 'Observações', 2000) : '';
+    const saleDate = validateSaleDate(req.body?.date, user.role as Role);
+    const paymentMethod = req.body?.paymentMethod ? text(req.body.paymentMethod, 'Forma de pagamento', 50) : null;
     const sale = await prisma.$transaction(async tx => {
       let cents = 0; let itemsSold = 0;
       for (const item of items) {
@@ -168,10 +171,104 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
         if (!updated.count) throw new HttpError(409, 'Estoque insuficiente. Atualize os produtos e confira as quantidades.');
         cents += Math.round(product.price * 100) * item.quantity; itemsSold += item.quantity;
       }
-      return tx.dailySales.create({ data: { totalRevenue: cents / 100, itemsSold, notes } });
+      const createdSale = await tx.dailySales.create({
+        data: {
+          date: saleDate,
+          totalRevenue: cents / 100,
+          itemsSold,
+          notes,
+          userId: user.id,
+          userName: user.name,
+        }
+      });
+      await tx.cashTransaction.create({
+        data: {
+          type: 'INFLOW',
+          category: 'SALE',
+          amount: cents / 100,
+          description: `Venda registrada (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'})`,
+          date: saleDate,
+          paymentMethod,
+          notes,
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role,
+          dailySalesId: createdSale.id,
+        }
+      });
+      return createdSale;
     });
     res.status(201).json(sale);
   });
+  app.get('/api/cash-flow', ...manage, async (req, res) => {
+    const { startDate, endDate, type, category } = req.query;
+    const where: Prisma.CashTransactionWhereInput = {};
+    if (startDate || endDate) {
+      where.date = {};
+      if (startDate && typeof startDate === 'string') {
+        const start = new Date(startDate.includes('T') ? startDate : `${startDate}T00:00:00.000Z`);
+        if (!isNaN(start.getTime())) where.date.gte = start;
+      }
+      if (endDate && typeof endDate === 'string') {
+        const end = new Date(endDate.includes('T') ? endDate : `${endDate}T23:59:59.999Z`);
+        if (!isNaN(end.getTime())) where.date.lte = end;
+      }
+    }
+    if (typeof type === 'string' && ['INFLOW', 'OUTFLOW'].includes(type)) {
+      where.type = type;
+    }
+    if (typeof category === 'string' && category) {
+      where.category = category;
+    }
+    const transactions = await prisma.cashTransaction.findMany({
+      where,
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+    });
+    let totalInflows = 0;
+    let totalOutflows = 0;
+    let salesTotal = 0;
+    for (const t of transactions) {
+      const amountCents = Math.round(t.amount * 100);
+      if (t.type === 'INFLOW') {
+        totalInflows += amountCents;
+        if (t.category === 'SALE') salesTotal += amountCents;
+      } else if (t.type === 'OUTFLOW') {
+        totalOutflows += amountCents;
+      }
+    }
+    const summary = {
+      totalInflows: totalInflows / 100,
+      totalOutflows: totalOutflows / 100,
+      netBalance: (totalInflows - totalOutflows) / 100,
+      salesTotal: salesTotal / 100,
+      transactionCount: transactions.length,
+    };
+    res.json({ summary, transactions });
+  });
+  app.post('/api/cash-flow', ...manage, async (req, res) => {
+    const user = res.locals.user;
+    const data = validateTransaction(req.body || {}, user.role as Role);
+    const transaction = await prisma.cashTransaction.create({
+      data: {
+        ...data,
+        userId: user.id,
+        userName: user.name,
+        userRole: user.role,
+      }
+    });
+    res.status(201).json(transaction);
+  });
+  app.delete('/api/cash-flow/:id', ...admin, async (req, res) => {
+    const id = String(req.params.id);
+    const tx = await prisma.cashTransaction.findUnique({ where: { id } });
+    if (!tx) throw new HttpError(404, 'Movimentação não encontrada.');
+    if (tx.dailySalesId) {
+      throw new HttpError(400, 'Não é possível excluir diretamente uma entrada vinculada a fechamento de venda.');
+    }
+    await prisma.cashTransaction.delete({ where: { id } });
+    res.status(204).end();
+  });
+
   app.get('/api/popup/active', async (_req, res) => res.json(await prisma.marketingPopup.findFirst({ where: { active: true }, orderBy: { updatedAt: 'desc' } })));
   app.get('/api/popup', ...admin, async (_req, res) => res.json(await prisma.marketingPopup.findFirst({ orderBy: { createdAt: 'desc' } })));
   async function campaign<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>) {

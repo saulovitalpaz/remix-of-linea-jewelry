@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Package, Settings as SettingsIcon, Receipt, LogOut, Plus, Pencil, Trash2, Layers, Star, ImageIcon, X, Check } from 'lucide-react';
+import { LayoutDashboard, Package, Settings as SettingsIcon, Receipt, LogOut, Plus, Pencil, Trash2, Layers, Star, ImageIcon, X, Check, CircleDollarSign } from 'lucide-react';
 import Settings from '@/components/admin/Settings';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import CategoryManager from '@/components/admin/CategoryManager';
+import CashFlowManager from '@/components/admin/CashFlowManager';
 import type { Product, CategoryModel } from '@/types/product';
 import type { AdminUser } from '@/types/admin';
 import { ROLE_LABELS } from '@/types/admin';
@@ -38,6 +39,8 @@ export default function Admin() {
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [sales, setSales] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
+  const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [salePaymentMethod, setSalePaymentMethod] = useState('PIX');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,8 +56,11 @@ export default function Admin() {
     setDraft(null);
     setSales({});
     setNotes('');
+    setSaleDate(new Date().toISOString().slice(0, 10));
+    setSalePaymentMethod('PIX');
     setTab('');
   };
+
 
   useEffect(() => {
     let live = true;
@@ -161,6 +167,7 @@ export default function Admin() {
 
   const navItems = user.role === 'ADMIN' ? [
     { id: 'dashboard', label: 'Painel Geral', icon: LayoutDashboard },
+    { id: 'cashflow', label: 'Fluxo de Caixa', icon: CircleDollarSign },
     { id: 'sales', label: 'Registrar vendas', icon: Receipt },
     { id: 'products', label: 'Produtos e estoque', icon: Package },
     { id: 'categories', label: 'Categorias', icon: Layers },
@@ -204,7 +211,7 @@ export default function Admin() {
             <p className="mb-2 text-sm text-muted-foreground">{ROLE_LABELS[user.role]}</p>
             <h1 className="text-2xl sm:text-3xl">Olá, {user.name}</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              {activeTab === 'sales' ? 'Registro rápido de vendas da equipe.' : activeTab === 'dashboard' ? 'Visão geral e atalhos de gerenciamento.' : activeTab === 'categories' ? 'Gerencie as categorias de produtos da loja.' : 'Acompanhe os produtos e as vendas da loja.'}
+              {activeTab === 'sales' ? 'Registro de vendas da equipe e baixa de estoque.' : activeTab === 'cashflow' ? 'Controle financeiro de entradas, saídas, despesas e relatórios.' : activeTab === 'dashboard' ? 'Visão geral e atalhos de gerenciamento.' : activeTab === 'categories' ? 'Gerencie as categorias de produtos da loja.' : 'Acompanhe os produtos e as vendas da loja.'}
             </p>
           </div>
         </div>
@@ -240,11 +247,14 @@ export default function Admin() {
             onNavigate={(targetTab) => { setDraft(null); setTab(targetTab); setError(''); setMessage(''); }}
             onNewProduct={() => { setTab('products'); setDraft({ ...emptyDraft, categoryId: categories[0]?.id || '' }); setImage(null); setError(''); setMessage(''); }}
           />
+        ) : activeTab === 'cashflow' && user.role === 'ADMIN' ? (
+          <CashFlowManager user={user} />
         ) : activeTab === 'categories' && user.role === 'ADMIN' ? (
           <CategoryManager categories={categories} onRefresh={refresh} />
         ) : activeTab === 'settings' && user.role === 'ADMIN' ? (
           <Settings />
         ) : (
+
           <>
             {/* Stat cards rendered ONLY for products tab */}
             {activeTab === 'products' && (
@@ -531,14 +541,73 @@ export default function Admin() {
                   }
                   if (!window.confirm('Confirmar o registro das vendas e a baixa no estoque?')) return;
                   run(async () => {
-                    await api('/sales/close-day', { method: 'POST', body: JSON.stringify({ itemsSoldData, notes }) }, true);
+                    await api('/sales/close-day', {
+                      method: 'POST',
+                      body: JSON.stringify({
+                        itemsSoldData,
+                        notes,
+                        date: canManage ? saleDate : undefined,
+                        paymentMethod: salePaymentMethod,
+                      })
+                    }, true);
                     setSales({});
                     setNotes('');
+                    setSaleDate(new Date().toISOString().slice(0, 10));
                     await refresh();
-                    setMessage('Vendas registradas e estoque atualizado.');
+                    setMessage('Vendas registradas e fluxo de caixa atualizado.');
                   });
                 }}
               >
+                {/* Date control and Payment method */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {canManage ? (
+                    <label className="block text-sm font-medium">
+                      Data da venda / lançamento
+                      <input
+                        type="date"
+                        required
+                        max={new Date().toISOString().slice(0, 10)}
+                        className="field mt-2"
+                        value={saleDate}
+                        onChange={e => setSaleDate(e.target.value)}
+                      />
+                      <span className="text-xs text-muted-foreground mt-1 block">
+                        Lançamento retroativo permitido para Admin e Gerência.
+                      </span>
+                    </label>
+                  ) : (
+                    <div className="rounded-xl border border-border bg-muted/40 p-3.5">
+                      <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Data da venda
+                      </span>
+                      <p className="mt-1 text-sm font-bold text-foreground">
+                        Hoje ({new Date().toLocaleDateString('pt-BR')})
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Perfil Vendedor: somente lançamentos do dia atual são permitidos.
+                      </p>
+                    </div>
+                  )}
+
+                  <label className="block text-sm font-medium">
+                    Forma de pagamento predominante
+                    <select
+                      className="field mt-2"
+                      value={salePaymentMethod}
+                      onChange={e => setSalePaymentMethod(e.target.value)}
+                    >
+                      <option value="DINHEIRO">Dinheiro em Espécie</option>
+                      <option value="PIX">PIX</option>
+                      <option value="CARTAO_DEBITO">Cartão de Débito</option>
+                      <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                      <option value="OUTRO">Outro / Misto</option>
+                    </select>
+                    <span className="text-xs text-muted-foreground mt-1 block">
+                      Registrado no fluxo de caixa da loja.
+                    </span>
+                  </label>
+                </div>
+
                 <label className="block text-sm font-medium">Observações sobre as vendas do dia
                   <textarea className="field mt-2" maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ex: Pagamentos em PIX / Cartão de Crédito..." />
                 </label>
@@ -549,6 +618,7 @@ export default function Admin() {
                 <p className="text-sm text-muted-foreground">O servidor confere os preços e o estoque ao confirmar.</p>
               </form>
             )}
+
           </>
         )}
       </main>
