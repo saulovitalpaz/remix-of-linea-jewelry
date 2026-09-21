@@ -4,9 +4,9 @@
 
 **Goal:** Produzir um manual `.docx` completo, visual e operacional para Administrador, Gerência e Vendedor, com wireframes esquemáticos e espaços reservados para capturas reais.
 
-**Architecture:** Um script Python isolado gera o documento com `python-docx`, utilizando componentes reutilizáveis para estilos, procedimentos, wireframes, espaços de captura e rodapé. O conteúdo é derivado do código atual, passa por auditorias estruturais e termina em renderização para PNG com inspeção visual de todas as páginas.
+**Architecture:** Um script Node isolado gera o documento com `docx`, utilizando componentes reutilizáveis para estilos, procedimentos, wireframes, espaços de captura e rodapé. O conteúdo é derivado do código atual, passa por auditorias estruturais e termina em renderização para PNG com inspeção visual de todas as páginas.
 
-**Tech Stack:** Python 3, python-docx, OOXML, renderizador DOCX do skill Documents e LibreOffice headless.
+**Tech Stack:** Node.js, pacote `docx`, OOXML, renderizador DOCX do skill Documents e LibreOffice headless.
 
 ## Global Constraints
 
@@ -23,7 +23,7 @@
 
 ## Estrutura de arquivos
 
-- Criar `scripts/build_user_manual.py`: conteúdo, componentes visuais e geração determinística do DOCX.
+- Criar `scripts/build_user_manual.mjs`: conteúdo, componentes visuais e geração determinística do DOCX.
 - Criar `docs/manual/Manual-do-Usuario-Chique-Detalhes.docx`: artefato final.
 - Criar temporariamente `tmp/manual-render/`: PNGs de QA que não serão entregues nem versionados.
 
@@ -38,7 +38,7 @@
 - Read: `backend/src/app.ts`
 - Read: `backend/src/validation.ts`
 - Read: `README.md`
-- Create: `scripts/build_user_manual.py`
+- Create: `scripts/build_user_manual.mjs`
 
 **Interfaces:**
 - Consumes: rótulos, ações e regras de acesso do sistema atual.
@@ -63,7 +63,7 @@ Expected: referências explícitas aos perfis `ADMIN`, `MANAGER` e `SELLER`, inc
 Executar:
 
 ```powershell
-rg -n "checkout|estorno|editar venda" scripts/build_user_manual.py
+rg -n "checkout|estorno|editar venda" scripts/build_user_manual.mjs
 ```
 
 Expected: nenhuma ocorrência apresentada como função disponível.
@@ -71,7 +71,7 @@ Expected: nenhuma ocorrência apresentada como função disponível.
 ### Task 2: Implementar o sistema visual e os componentes do documento
 
 **Files:**
-- Modify: `scripts/build_user_manual.py`
+- Modify: `scripts/build_user_manual.mjs`
 - Create: `docs/manual/Manual-do-Usuario-Chique-Detalhes.docx`
 
 **Interfaces:**
@@ -95,7 +95,7 @@ Gerar introdução, acesso, matriz de permissões, capítulos dos três perfis, 
 Executar:
 
 ```powershell
-python scripts/build_user_manual.py
+node scripts/build_user_manual.mjs
 ```
 
 Expected: `docs/manual/Manual-do-Usuario-Chique-Detalhes.docx` existente e com tamanho superior a 20 KB.
@@ -160,7 +160,7 @@ Confirmar: ausência de texto cortado, sobreposição, tabelas quebradas, wirefr
 
 - [ ] **Step 3: Corrigir e renderizar novamente**
 
-Se houver defeito, ajustar `scripts/build_user_manual.py`, gerar novamente o DOCX e repetir a renderização completa até todas as páginas passarem.
+Se houver defeito, ajustar `scripts/build_user_manual.mjs`, gerar novamente o DOCX e repetir a renderização completa até todas as páginas passarem.
 
 - [ ] **Step 4: Verificar o artefato final**
 
@@ -176,7 +176,7 @@ Expected: DOCX final presente, não vazio, e somente arquivos planejados aparece
 ### Task 5: Registrar a entrega
 
 **Files:**
-- Add: `scripts/build_user_manual.py`
+- Add: `scripts/build_user_manual.mjs`
 - Add: `docs/manual/Manual-do-Usuario-Chique-Detalhes.docx`
 
 **Interfaces:**
@@ -186,7 +186,7 @@ Expected: DOCX final presente, não vazio, e somente arquivos planejados aparece
 - [ ] **Step 1: Registrar os arquivos**
 
 ```powershell
-git add -- scripts/build_user_manual.py docs/manual/Manual-do-Usuario-Chique-Detalhes.docx
+git add -- scripts/build_user_manual.mjs docs/manual/Manual-do-Usuario-Chique-Detalhes.docx
 git commit -m "docs: adicionar manual dos tres perfis"
 ```
 
