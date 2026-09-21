@@ -71,7 +71,7 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     const username = normalizeUsername(req.body?.username);
     const password = req.body?.password;
     if (typeof password !== 'string' || !password || Buffer.byteLength(password) > 72) throw new HttpError(400, 'Senha inválida.');
-    const user = await prisma.adminUser.findUnique({ where: { username } });
+    const user = await prisma.adminUser.findFirst({ where: { OR: [{ username }, { email: username }] } });
     const valid = await bcrypt.compare(password, user?.passwordHash || dummyHash);
     if (!user || !valid || !roles.includes(user.role as Role)) throw new HttpError(401, 'Nome ou senha incorretos.');
     const token = jwt.sign({ id: user.id }, jwtSecret, { algorithm: 'HS256', expiresIn: '8h', audience: 'chique-admin', issuer: 'chique-api' });
@@ -174,7 +174,7 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     if (code === 'P2002') { res.status(409).json({ error: 'Este nome já está cadastrado.' }); return; }
     if (code === 'P2025') { res.status(404).json({ error: 'Registro não encontrado.' }); return; }
     if (error instanceof SyntaxError) { res.status(400).json({ error: 'Requisição inválida.' }); return; }
-    console.error('API request failed:', error instanceof Error ? error.name : 'UnknownError');
+    console.error('API request failed:', error);
     res.status(500).json({ error: 'Não foi possível concluir a operação. Tente novamente.' });
   };
   app.use(errors);

@@ -22,6 +22,14 @@ test('HTTP authorization, validation, stock and authentication', { skip: !create
   const db = {
     adminUser: {
       findUnique: async ({ where }: { where: { id?: string; username?: string } }) => users.find(u => u.id === where.id || u.username === where.username) ?? null,
+      findFirst: async ({ where }: { where: { id?: string; username?: string; OR?: Array<{ username?: string; email?: string }> } }) => {
+        if (where.OR) {
+          const match = where.OR.find(cond => cond.username || cond.email);
+          const val = match?.username || match?.email;
+          return users.find(u => u.username === val || u.email === val) ?? null;
+        }
+        return users.find(u => u.id === where.id || u.username === where.username) ?? null;
+      },
       findMany: async () => users,
       create: async ({ data }: { data: object }) => ({ id: 'new', ...data }),
     },
@@ -59,6 +67,7 @@ test('HTTP authorization, validation, stock and authentication', { skip: !create
     assert.equal('email' in userList[0], false);
     assert.equal((await request('/users', 'POST', 'admin', { name: 'Novo', password: 'long-password', role: 'ROOT' })).status, 400);
     assert.equal((await request('/auth/login', 'POST', undefined, { username: 'Bárbara Paz', password: 'a-test-password' })).status, 200);
+    assert.equal((await request('/auth/login', 'POST', undefined, { username: 'private@example.com', password: 'a-test-password' })).status, 200);
     assert.equal((await request('/auth/login', 'POST', undefined, { username: {}, password: [] })).status, 400);
     assert.equal((await request('/products', 'POST', 'manager', { name: 'Produto', price: -1, stock: 2, categoryId: 'x' })).status, 400);
     assert.equal((await request('/sales/close-day', 'POST', 'seller', { itemsSoldData: [{ productId: 'p1', quantity: -2 }] })).status, 400);
