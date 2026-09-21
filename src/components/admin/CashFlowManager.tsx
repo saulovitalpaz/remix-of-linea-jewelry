@@ -177,15 +177,18 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
     }
   }
 
-  async function handleDeleteTransaction(id: string) {
-    if (!window.confirm('Tem certeza que deseja excluir esta movimentação de caixa?')) return;
+  async function handleDeleteTransaction(id: string, isSale = false) {
+    const confirmMsg = isSale
+      ? 'Tem certeza que deseja excluir esta entrada de venda do fluxo de caixa? O saldo será recalculado.'
+      : 'Tem certeza que deseja excluir esta movimentação de caixa?';
+    if (!window.confirm(confirmMsg)) return;
     if (busy) return;
     setBusy(true);
     setError('');
     setMessage('');
     try {
       await api(`/cash-flow/${id}`, { method: 'DELETE' }, true);
-      setMessage('Movimentação excluída com sucesso.');
+      setMessage(isSale ? 'Entrada de venda excluída com sucesso.' : 'Movimentação excluída com sucesso.');
       await loadData();
     } catch (err) {
       setError(errorMessage(err));
@@ -193,6 +196,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
       setBusy(false);
     }
   }
+
 
   return (
     <div className="space-y-6 animate-fade-in" aria-label="Fluxo de Caixa">
@@ -515,22 +519,17 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
                       </td>
                       {user.role === 'ADMIN' && (
                         <td className="p-4 text-center whitespace-nowrap">
-                          {!t.dailySalesId ? (
-                            <button
-                              onClick={() => handleDeleteTransaction(t.id)}
-                              disabled={busy}
-                              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                              title="Excluir lançamento"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground italic" title="Originado de venda">
-                              Venda
-                            </span>
-                          )}
+                          <button
+                            onClick={() => handleDeleteTransaction(t.id, t.category === 'SALE')}
+                            disabled={busy}
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title={t.category === 'SALE' ? "Excluir entrada de venda" : "Excluir lançamento"}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       )}
+
                     </tr>
                   );
                 })}

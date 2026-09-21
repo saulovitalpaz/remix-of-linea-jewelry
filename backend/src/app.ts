@@ -5,7 +5,7 @@ import type { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
-import { HttpError, text, number, normalizeUsername, roles, salesItems, validateSaleDate, validateTransaction } from './validation.js';
+import { HttpError, text, number, normalizeUsername, roles, salesItems, validateSaleDate, validateTransaction, validateCustomItems } from './validation.js';
 import type { Role } from './validation.js';
 
 interface Dependencies { prisma: PrismaClient; jwtSecret: string; uploadImage: (buffer: Buffer, contentType?: string) => Promise<string> }
@@ -158,8 +158,12 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
   });
   app.post('/api/sales/close-day', authenticate, permit(...roles), async (req, res) => {
     const user = res.locals.user;
-    const items = salesItems(req.body?.itemsSoldData);
-    const notes = req.body.notes ? text(req.body.notes, 'Observações', 2000) : '';
+    const customItems = validateCustomItems(req.body?.customItems);
+    const items = salesItems(req.body?.itemsSoldData, customItems.length > 0);
+    if (items.length === 0 && customItems.length === 0) {
+      throw new HttpError(400, 'Informe ao menos um produto do estoque ou um item avulso.');
+    }
+    const notes = req.body?.notes ? text(req.body.notes, 'Observações', 2000) : '';
     const saleDate = validateSaleDate(req.body?.date, user.role as Role);
     const paymentMethod = req.body?.paymentMethod ? text(req.body.paymentMethod, 'Forma de pagamento', 50) : null;
     const sale = await prisma.$transaction(async tx => {
@@ -170,6 +174,16 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
         const updated = await tx.product.updateMany({ where: { id: item.productId, stock: { gte: item.quantity } }, data: { stock: { decrement: item.quantity }, salesCount: { increment: item.quantity } } });
         if (!updated.count) throw new HttpError(409, 'Estoque insuficiente. Atualize os produtos e confira as quantidades.');
         cents += Math.round(product.price * 100) * item.quantity; itemsSold += item.quantity;
+      }
+      for (const ci of customItems) {
+        cents += Math.round(ci.price * 100) * ci.quantity;
+        itemsSold += ci.quantity;
+      }
+      let desc = `Venda registrada (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'})`;
+      if (customItems.length > 0 && items.length === 0) {
+        desc = `Venda avulsa: ${customItems.map(c => `${c.quantity > 1 ? c.quantity + 'x ' : ''}${c.description}`).join(', ')}`;
+      } else if (customItems.length > 0) {
+        desc = `Venda mista (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'}, incl. avulsos)`;
       }
       const createdSale = await tx.dailySales.create({
         data: {
@@ -186,7 +200,7 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
           type: 'INFLOW',
           category: 'SALE',
           amount: cents / 100,
-          description: `Venda registrada (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'})`,
+          description: desc,
           date: saleDate,
           paymentMethod,
           notes,
@@ -199,6 +213,66 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
       return createdSale;
     });
     res.status(201).json(sale);
+  });
+  app.get('/api/sales/history', authenticate, permit(...roles), async (req, res) => {
+    const user = res.locals.user;
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const todaySales = await prisma.dailySales.findMany({
+      where: {
+        date: {
+          gte: startOfToday,
+          lte: endOfToday,
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    let todayRevenue = 0;
+    let todayItemsSold = 0;
+    for (const s of todaySales) {
+      todayRevenue += Math.round(s.totalRevenue * 100);
+      todayItemsSold += s.itemsSold;
+    }
+
+    const todaySummary = {
+      totalRevenue: todayRevenue / 100,
+      salesCount: todaySales.length,
+      itemsSold: todayItemsSold,
+    };
+
+    const userRecentSales = await prisma.dailySales.findMany({
+      where: { userId: user.id },
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      take: 10,
+    });
+
+    // Also get paymentMethod and description from cashTransaction for these sales
+    const saleIds = userRecentSales.map(s => s.id);
+    const txs = saleIds.length > 0 ? await prisma.cashTransaction.findMany({
+      where: { dailySalesId: { in: saleIds } },
+      select: { dailySalesId: true, paymentMethod: true, description: true }
+    }) : [];
+    const txMap = new Map(txs.map(t => [t.dailySalesId, t]));
+
+    const formattedRecent = userRecentSales.map(s => {
+      const match = txMap.get(s.id);
+      return {
+        id: s.id,
+        date: s.date,
+        createdAt: s.createdAt,
+        totalRevenue: s.totalRevenue,
+        itemsSold: s.itemsSold,
+        notes: s.notes,
+        userName: s.userName,
+        paymentMethod: match?.paymentMethod || null,
+        description: match?.description || null,
+      };
+    });
+
+    res.json({ todaySummary, userRecentSales: formattedRecent });
   });
   app.get('/api/cash-flow', ...manage, async (req, res) => {
     const { startDate, endDate, type, category } = req.query;
@@ -262,12 +336,15 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     const id = String(req.params.id);
     const tx = await prisma.cashTransaction.findUnique({ where: { id } });
     if (!tx) throw new HttpError(404, 'Movimentação não encontrada.');
-    if (tx.dailySalesId) {
-      throw new HttpError(400, 'Não é possível excluir diretamente uma entrada vinculada a fechamento de venda.');
-    }
-    await prisma.cashTransaction.delete({ where: { id } });
+    await prisma.$transaction(async txClient => {
+      await txClient.cashTransaction.delete({ where: { id } });
+      if (tx.dailySalesId) {
+        await txClient.dailySales.delete({ where: { id: tx.dailySalesId } }).catch(() => null);
+      }
+    });
     res.status(204).end();
   });
+
 
   app.get('/api/popup/active', async (_req, res) => res.json(await prisma.marketingPopup.findFirst({ where: { active: true }, orderBy: { updatedAt: 'desc' } })));
   app.get('/api/popup', ...admin, async (_req, res) => res.json(await prisma.marketingPopup.findFirst({ orderBy: { createdAt: 'desc' } })));

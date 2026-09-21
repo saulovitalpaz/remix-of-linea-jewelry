@@ -24,6 +24,31 @@ interface Draft {
   featured?: boolean;
 }
 
+interface CustomSaleItem {
+  id: string;
+  description: string;
+  price: string;
+  quantity: number;
+}
+
+interface SalesHistoryData {
+  todaySummary: {
+    totalRevenue: number;
+    salesCount: number;
+    itemsSold: number;
+  };
+  userRecentSales: Array<{
+    id: string;
+    date: string;
+    createdAt: string;
+    totalRevenue: number;
+    itemsSold: number;
+    notes?: string;
+    paymentMethod?: string;
+    description?: string;
+  }>;
+}
+
 const emptyDraft: Draft = { name: '', price: '', stock: '0', categoryId: '', description: '', imageUrl: '', featured: false };
 
 export default function Admin() {
@@ -41,6 +66,13 @@ export default function Admin() {
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [salePaymentMethod, setSalePaymentMethod] = useState('PIX');
+  const [customItems, setCustomItems] = useState<CustomSaleItem[]>([]);
+  const [newCustomDesc, setNewCustomDesc] = useState('');
+  const [newCustomPrice, setNewCustomPrice] = useState('');
+  const [newCustomQty, setNewCustomQty] = useState(1);
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [salesHistory, setSalesHistory] = useState<SalesHistoryData | null>(null);
+  const [showRecentSales, setShowRecentSales] = useState(true);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,8 +90,11 @@ export default function Admin() {
     setNotes('');
     setSaleDate(new Date().toISOString().slice(0, 10));
     setSalePaymentMethod('PIX');
+    setCustomItems([]);
+    setSalesHistory(null);
     setTab('');
   };
+
 
 
   useEffect(() => {
@@ -70,10 +105,19 @@ export default function Admin() {
     return () => { live = false; window.removeEventListener('session-expired', expired); };
   }, []);
 
+  async function loadSalesHistory() {
+    try {
+      const res = await api<SalesHistoryData>('/sales/history', {}, true);
+      setSalesHistory(res);
+    } catch {
+      // ignore
+    }
+  }
+
   async function refresh() {
     setLoading(true);
     try {
-      const [items, groups] = await Promise.all([ProductService.getProducts(), ProductService.getCategories()]);
+      const [items, groups] = await Promise.all([ProductService.getProducts(), ProductService.getCategories(), loadSalesHistory()]);
       setProducts(items);
       setCategories(groups);
     } finally {
@@ -86,13 +130,20 @@ export default function Admin() {
     if (user) {
       const defaultTab = user.role === 'ADMIN' ? 'dashboard' : 'sales';
       setTab(current => current || defaultTab);
-      Promise.all([ProductService.getProducts(), ProductService.getCategories()])
+      Promise.all([ProductService.getProducts(), ProductService.getCategories(), loadSalesHistory()])
         .then(([items, groups]) => { if (live) { setProducts(items); setCategories(groups); } })
         .catch(e => { if (live) setError(errorMessage(e)); })
         .finally(() => { if (live) setLoading(false); });
     }
     return () => { live = false; };
   }, [user]);
+
+  useEffect(() => {
+    if (user && activeTab === 'sales') {
+      loadSalesHistory();
+    }
+  }, [user, tab]);
+
 
   useEffect(() => {
     if (!draft) return;
@@ -263,6 +314,26 @@ export default function Admin() {
                 <div className="admin-stat"><span>Unidades em estoque</span><strong>{products.reduce((sum, p) => sum + p.stock, 0)}</strong></div>
                 <div className="admin-stat"><span>Destaques Homepage</span><strong className="text-amber-600 dark:text-amber-400">{products.filter(p => p.featured).length}</strong></div>
                 <div className="admin-stat"><span>Produtos esgotados</span><strong className="text-destructive">{products.filter(p => p.stock === 0).length}</strong></div>
+              </div>
+            )}
+
+            {/* Stat cards rendered for sales tab */}
+            {activeTab === 'sales' && salesHistory && (
+              <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="admin-stat">
+                  <span>Faturamento Hoje</span>
+                  <strong className="text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(salesHistory.todaySummary.totalRevenue)}
+                  </strong>
+                </div>
+                <div className="admin-stat">
+                  <span>Vendas Registradas Hoje</span>
+                  <strong>{salesHistory.todaySummary.salesCount} {salesHistory.todaySummary.salesCount === 1 ? 'venda' : 'vendas'}</strong>
+                </div>
+                <div className="admin-stat">
+                  <span>Peças Vendidas Hoje</span>
+                  <strong>{salesHistory.todaySummary.itemsSold} {salesHistory.todaySummary.itemsSold === 1 ? 'peça' : 'peças'}</strong>
+                </div>
               </div>
             )}
 
@@ -530,93 +601,319 @@ export default function Admin() {
             )}
 
             {activeTab === 'sales' && (
-              <form
-                className="admin-panel mt-6 space-y-5"
-                onSubmit={e => {
-                  e.preventDefault();
-                  const itemsSoldData = Object.entries(sales).filter(([, quantity]) => quantity > 0).map(([productId, quantity]) => ({ productId, quantity }));
-                  if (!itemsSoldData.length) { setError('Informe ao menos uma venda.'); return; }
-                  if (itemsSoldData.some(item => !Number.isInteger(item.quantity) || item.quantity > (products.find(p => p.id === item.productId)?.stock || 0))) {
-                    setError('Confira as quantidades e o estoque disponível.'); return;
-                  }
-                  if (!window.confirm('Confirmar o registro das vendas e a baixa no estoque?')) return;
-                  run(async () => {
-                    await api('/sales/close-day', {
-                      method: 'POST',
-                      body: JSON.stringify({
-                        itemsSoldData,
-                        notes,
-                        date: canManage ? saleDate : undefined,
-                        paymentMethod: salePaymentMethod,
-                      })
-                    }, true);
-                    setSales({});
-                    setNotes('');
-                    setSaleDate(new Date().toISOString().slice(0, 10));
-                    await refresh();
-                    setMessage('Vendas registradas e fluxo de caixa atualizado.');
-                  });
-                }}
-              >
-                {/* Date control and Payment method */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {canManage ? (
+              <>
+                <form
+                  className="admin-panel mt-6 space-y-6"
+                  onSubmit={e => {
+                    e.preventDefault();
+                    const itemsSoldData = Object.entries(sales).filter(([, quantity]) => quantity > 0).map(([productId, quantity]) => ({ productId, quantity }));
+                    const customItemsData = customItems.map(ci => ({
+                      description: ci.description,
+                      price: parseFloat(ci.price),
+                      quantity: ci.quantity
+                    }));
+                    if (!itemsSoldData.length && !customItemsData.length) {
+                      setError('Informe ao menos um produto do catálogo ou item avulso.');
+                      return;
+                    }
+                    if (itemsSoldData.some(item => !Number.isInteger(item.quantity) || item.quantity > (products.find(p => p.id === item.productId)?.stock || 0))) {
+                      setError('Confira as quantidades e o estoque disponível dos produtos do catálogo.');
+                      return;
+                    }
+                    if (!window.confirm('Confirmar o registro das vendas e a baixa no estoque?')) return;
+                    run(async () => {
+                      await api('/sales/close-day', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                          itemsSoldData: itemsSoldData.length ? itemsSoldData : undefined,
+                          customItems: customItemsData.length ? customItemsData : undefined,
+                          notes,
+                          date: canManage ? saleDate : undefined,
+                          paymentMethod: salePaymentMethod,
+                        })
+                      }, true);
+                      setSales({});
+                      setCustomItems([]);
+                      setNotes('');
+                      setSaleDate(new Date().toISOString().slice(0, 10));
+                      await refresh();
+                      setMessage('Vendas registradas e fluxo de caixa atualizado.');
+                    });
+                  }}
+                >
+                  {/* Venda Avulsa / Itens Adicionais */}
+                  <div className="rounded-xl border border-border bg-muted/30 p-4 sm:p-5 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="font-bold text-base flex items-center gap-2">
+                          <Plus size={18} className="text-primary" /> Venda Avulsa / Itens Especiais
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Adicione itens avulsos ou serviços sem necessidade de estoque no catálogo (ex: ajustes, gravações, peças sob encomenda).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-12 items-end">
+                      <div className="sm:col-span-6">
+                        <label className="text-xs font-medium text-muted-foreground block mb-1">
+                          Descrição do item avulso
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Ajuste de anel, gravação, encomenda especial..."
+                          className="field text-sm"
+                          value={newCustomDesc}
+                          onChange={e => setNewCustomDesc(e.target.value)}
+                          maxLength={200}
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="text-xs font-medium text-muted-foreground block mb-1">
+                          Valor unitário (R$)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.01"
+                          placeholder="0,00"
+                          className="field text-sm"
+                          value={newCustomPrice}
+                          onChange={e => setNewCustomPrice(e.target.value)}
+                        />
+                      </div>
+                      <div className="sm:col-span-1">
+                        <label className="text-xs font-medium text-muted-foreground block mb-1">
+                          Qtd
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          className="field text-sm"
+                          value={newCustomQty}
+                          onChange={e => setNewCustomQty(Math.max(1, parseInt(e.target.value) || 1))}
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <button
+                          type="button"
+                          className="button-secondary w-full text-xs py-2 flex items-center justify-center gap-1.5"
+                          onClick={() => {
+                            const desc = newCustomDesc.trim();
+                            const priceNum = parseFloat(newCustomPrice.replace(',', '.'));
+                            if (!desc) {
+                              setError('Informe a descrição do item avulso.');
+                              return;
+                            }
+                            if (isNaN(priceNum) || priceNum <= 0) {
+                              setError('Informe um valor válido para o item avulso.');
+                              return;
+                            }
+                            setCustomItems(prev => [
+                              ...prev,
+                              {
+                                id: String(Date.now() + Math.random()),
+                                description: desc,
+                                price: priceNum.toFixed(2),
+                                quantity: newCustomQty
+                              }
+                            ]);
+                            setNewCustomDesc('');
+                            setNewCustomPrice('');
+                            setNewCustomQty(1);
+                            setError('');
+                          }}
+                        >
+                          <Plus size={16} /> Adicionar
+                        </button>
+                      </div>
+                    </div>
+
+                    {customItems.length > 0 && (
+                      <div className="rounded-xl border border-border overflow-hidden mt-3">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-muted/60 text-muted-foreground font-semibold">
+                            <tr>
+                              <th className="p-3">Item avulso</th>
+                              <th className="p-3 text-center">Qtd</th>
+                              <th className="p-3">Valor unitário</th>
+                              <th className="p-3">Subtotal</th>
+                              <th className="p-3 w-10 text-center">Remover</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border bg-background">
+                            {customItems.map(ci => (
+                              <tr key={ci.id} className="hover:bg-muted/20">
+                                <td className="p-3 font-medium">{ci.description}</td>
+                                <td className="p-3 text-center tabular-nums">{ci.quantity}</td>
+                                <td className="p-3 tabular-nums">{formatCurrency(parseFloat(ci.price))}</td>
+                                <td className="p-3 font-semibold tabular-nums">
+                                  {formatCurrency(parseFloat(ci.price) * ci.quantity)}
+                                </td>
+                                <td className="p-3 text-center">
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
+                                    onClick={() => setCustomItems(prev => prev.filter(item => item.id !== ci.id))}
+                                    title="Remover item avulso"
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Date control and Payment method */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {canManage ? (
+                      <label className="block text-sm font-medium">
+                        Data da venda / lançamento
+                        <input
+                          type="date"
+                          required
+                          max={new Date().toISOString().slice(0, 10)}
+                          className="field mt-2"
+                          value={saleDate}
+                          onChange={e => setSaleDate(e.target.value)}
+                        />
+                        <span className="text-xs text-muted-foreground mt-1 block">
+                          Lançamento retroativo permitido para Admin e Gerência.
+                        </span>
+                      </label>
+                    ) : (
+                      <div className="rounded-xl border border-border bg-muted/40 p-3.5">
+                        <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Data da venda
+                        </span>
+                        <p className="mt-1 text-sm font-bold text-foreground">
+                          Hoje ({new Date().toLocaleDateString('pt-BR')})
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Perfil Vendedor: somente lançamentos do dia atual são permitidos.
+                        </p>
+                      </div>
+                    )}
+
                     <label className="block text-sm font-medium">
-                      Data da venda / lançamento
-                      <input
-                        type="date"
-                        required
-                        max={new Date().toISOString().slice(0, 10)}
+                      Forma de pagamento predominante
+                      <select
                         className="field mt-2"
-                        value={saleDate}
-                        onChange={e => setSaleDate(e.target.value)}
-                      />
+                        value={salePaymentMethod}
+                        onChange={e => setSalePaymentMethod(e.target.value)}
+                      >
+                        <option value="DINHEIRO">Dinheiro em Espécie</option>
+                        <option value="PIX">PIX</option>
+                        <option value="CARTAO_DEBITO">Cartão de Débito</option>
+                        <option value="CARTAO_CREDITO">Cartão de Crédito</option>
+                        <option value="OUTRO">Outro / Misto</option>
+                      </select>
                       <span className="text-xs text-muted-foreground mt-1 block">
-                        Lançamento retroativo permitido para Admin e Gerência.
+                        Registrado no fluxo de caixa da loja.
                       </span>
                     </label>
-                  ) : (
-                    <div className="rounded-xl border border-border bg-muted/40 p-3.5">
-                      <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Data da venda
-                      </span>
-                      <p className="mt-1 text-sm font-bold text-foreground">
-                        Hoje ({new Date().toLocaleDateString('pt-BR')})
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Perfil Vendedor: somente lançamentos do dia atual são permitidos.
-                      </p>
-                    </div>
-                  )}
+                  </div>
 
-                  <label className="block text-sm font-medium">
-                    Forma de pagamento predominante
-                    <select
-                      className="field mt-2"
-                      value={salePaymentMethod}
-                      onChange={e => setSalePaymentMethod(e.target.value)}
-                    >
-                      <option value="DINHEIRO">Dinheiro em Espécie</option>
-                      <option value="PIX">PIX</option>
-                      <option value="CARTAO_DEBITO">Cartão de Débito</option>
-                      <option value="CARTAO_CREDITO">Cartão de Crédito</option>
-                      <option value="OUTRO">Outro / Misto</option>
-                    </select>
-                    <span className="text-xs text-muted-foreground mt-1 block">
-                      Registrado no fluxo de caixa da loja.
-                    </span>
+                  <label className="block text-sm font-medium">Observações sobre as vendas
+                    <textarea className="field mt-2" maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ex: Pagamentos em PIX / Cartão de Crédito..." />
                   </label>
-                </div>
 
-                <label className="block text-sm font-medium">Observações sobre as vendas do dia
-                  <textarea className="field mt-2" maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Ex: Pagamentos em PIX / Cartão de Crédito..." />
-                </label>
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <p>Total estimado <strong className="ml-2 text-xl tabular-nums">{formatCurrency(products.reduce((sum, p) => sum + Math.round(p.price * 100) * (sales[p.id] || 0), 0) / 100)}</strong></p>
-                  <button className="button-primary" disabled={busy || loading}>{busy ? 'Registrando…' : 'Confirmar vendas'}</button>
-                </div>
-                <p className="text-sm text-muted-foreground">O servidor confere os preços e o estoque ao confirmar.</p>
-              </form>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total estimado:</p>
+                      <p className="text-2xl font-bold tabular-nums text-foreground">
+                        {formatCurrency(
+                          (products.reduce((sum, p) => sum + Math.round(p.price * 100) * (sales[p.id] || 0), 0) +
+                           customItems.reduce((sum, ci) => sum + Math.round(parseFloat(ci.price || '0') * 100) * ci.quantity, 0)) / 100
+                        )}
+                      </p>
+                      {customItems.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          (Catálogo: {formatCurrency(products.reduce((sum, p) => sum + Math.round(p.price * 100) * (sales[p.id] || 0), 0) / 100)} | Avulso: {formatCurrency(customItems.reduce((sum, ci) => sum + Math.round(parseFloat(ci.price || '0') * 100) * ci.quantity, 0) / 100)})
+                        </p>
+                      )}
+                    </div>
+                    <button className="button-primary" disabled={busy || loading}>{busy ? 'Registrando…' : 'Confirmar vendas'}</button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">O servidor confere os preços e o estoque dos produtos de catálogo ao confirmar.</p>
+                </form>
+
+                {/* Histórico das Últimas Vendas do Usuário Conectado */}
+                {salesHistory?.userRecentSales && salesHistory.userRecentSales.length > 0 && (
+                  <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4 mt-8">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-base flex items-center gap-2">
+                          <Receipt size={18} className="text-primary" /> Minhas Últimas Vendas Registradas
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Histórico recente dos seus lançamentos no sistema ({salesHistory.userRecentSales.length} {salesHistory.userRecentSales.length === 1 ? 'registro' : 'registros'}).
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="button-secondary text-xs py-1 px-3"
+                        onClick={() => setShowRecentSales(!showRecentSales)}
+                      >
+                        {showRecentSales ? 'Ocultar' : 'Exibir'}
+                      </button>
+                    </div>
+
+                    {showRecentSales && (
+                      <div className="overflow-x-auto rounded-xl border border-border">
+                        <table className="w-full text-left text-sm">
+                          <thead className="bg-muted/60 text-muted-foreground text-xs font-semibold">
+                            <tr>
+                              <th className="p-3">Data / Registro</th>
+                              <th className="p-3">Descrição / Observações</th>
+                              <th className="p-3">Pagamento</th>
+                              <th className="p-3 text-center">Peças</th>
+                              <th className="p-3 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border bg-background text-xs">
+                            {salesHistory.userRecentSales.map(sale => (
+                              <tr key={sale.id} className="hover:bg-muted/20">
+                                <td className="p-3 whitespace-nowrap">
+                                  <span className="font-medium text-foreground block">
+                                    {new Date(sale.date).toLocaleDateString('pt-BR')}
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {new Date(sale.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <p className="font-medium text-foreground">{sale.description || 'Venda registrada'}</p>
+                                  {sale.notes && (
+                                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 italic">
+                                      "{sale.notes}"
+                                    </p>
+                                  )}
+                                </td>
+                                <td className="p-3 whitespace-nowrap">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground">
+                                    {sale.paymentMethod || 'Não informado'}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-center font-medium tabular-nums">
+                                  {sale.itemsSold} un.
+                                </td>
+                                <td className="p-3 text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                                  {formatCurrency(sale.totalRevenue)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
           </>

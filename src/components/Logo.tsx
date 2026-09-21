@@ -5,11 +5,12 @@ export default function Logo() {
     return (
         <div className={styles.container}>
             <img
-                src="/Gemini_Generated_Image_idjs8midjs8midjs.png"
+                src="/Logo 1.png"
                 alt="Chique Detalhes Official Logo"
                 className={styles.logoImage}
                 style={{ width: 'auto', height: 'auto', maxWidth: '200px' }}
             />
+
         </div>
     );
 }

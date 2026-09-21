@@ -80,8 +80,30 @@ export function validateTransaction(body: Record<string, unknown>, userRole: Rol
   return { type, category, amount, description, paymentMethod, notes, date };
 }
 
-export function salesItems(value: unknown): { productId: string; quantity: number }[] {
-  if (!Array.isArray(value) || value.length === 0 || value.length > 200) throw new HttpError(400, 'Informe de 1 a 200 itens.');
+export function validateCustomItems(value: unknown): { description: string; price: number; quantity: number }[] {
+  if (value === undefined || value === null || value === '') return [];
+  if (!Array.isArray(value)) throw new HttpError(400, 'Itens avulsos inválidos.');
+  if (value.length > 50) throw new HttpError(400, 'No máximo 50 itens avulsos por venda.');
+  const items: { description: string; price: number; quantity: number }[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== 'object') throw new HttpError(400, 'Item avulso inválido.');
+    const description = text(item.description, 'Descrição do item avulso', 200);
+    const price = number(item.price, 'Preço do item avulso');
+    if (price <= 0 || Math.abs(price * 100 - Math.round(price * 100)) > 0.00001) {
+      throw new HttpError(400, 'Informe um preço positivo com até duas casas decimais para cada item avulso.');
+    }
+    const quantity = number(item.quantity ?? 1, 'Quantidade do item avulso', true);
+    if (quantity < 1) throw new HttpError(400, 'Quantidade do item avulso deve ser maior que zero.');
+    items.push({ description, price, quantity });
+  }
+  return items;
+}
+
+export function salesItems(value: unknown, allowEmpty = false): { productId: string; quantity: number }[] {
+  if ((value === undefined || value === null || (Array.isArray(value) && value.length === 0)) && allowEmpty) {
+    return [];
+  }
+  if (!Array.isArray(value) || value.length === 0 || value.length > 200) throw new HttpError(400, 'Informe de 1 a 200 itens do estoque.');
   const merged = new Map<string, number>();
   for (const item of value) {
     if (!item || typeof item !== 'object') throw new HttpError(400, 'Item inválido.');
@@ -92,4 +114,5 @@ export function salesItems(value: unknown): { productId: string; quantity: numbe
   }
   return [...merged].sort(([a], [b]) => a.localeCompare(b)).map(([productId, quantity]) => ({ productId, quantity }));
 }
+
 
