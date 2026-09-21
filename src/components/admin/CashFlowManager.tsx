@@ -43,7 +43,8 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
     summary: { totalInflows: 0, totalOutflows: 0, netBalance: 0, salesTotal: 0, transactionCount: 0 },
     transactions: [],
   });
-  const [loading, setLoading] = useState(true);
+  const [refreshing, setLoading] = useState(true);
+  const [loadedPeriod, setLoadedPeriod] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -121,6 +122,8 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
       periodLabel: `Período (${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')})`,
     };
   }, [periodMode, selectedDate, selectedMonth, customStart, customEnd]);
+  const periodKey = `${startDate}:${endDate}`;
+  const loading = refreshing || loadedPeriod !== periodKey;
 
   async function loadData() {
     setLoading(true);
@@ -135,12 +138,19 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
       setError(errorMessage(err));
     } finally {
       setLoading(false);
+      setLoadedPeriod(periodKey);
     }
   }
 
   useEffect(() => {
-    loadData();
-  }, [startDate, endDate]);
+    let live = true;
+    const params = new URLSearchParams({ startDate, endDate });
+    api<CashFlowData>(`/cash-flow?${params}`, {}, true)
+      .then(result => { if (live) { setData(result); setError(''); } })
+      .catch(err => { if (live) setError(errorMessage(err)); })
+      .finally(() => { if (live) { setLoading(false); setLoadedPeriod(periodKey); } });
+    return () => { live = false; };
+  }, [startDate, endDate, periodKey]);
 
   async function handleCreateTransaction(e: React.FormEvent) {
     e.preventDefault();
@@ -209,7 +219,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
             <DollarSign className="text-primary" size={26} /> Fluxo de Caixa
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Acompanhe entradas de vendas, despesas, retiradas e saldo com identificação do usuário responsável.
+            Entradas, despesas e saldo da loja.
           </p>
         </div>
 
@@ -228,7 +238,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
             className="button-primary flex items-center gap-1.5 text-xs sm:text-sm"
           >
             <Plus size={16} />
-            <span>Nova Retirada / Entrada</span>
+            <span>Nova movimentação</span>
           </button>
           <button
             onClick={loadData}
@@ -440,7 +450,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
           <div>
             <h3 className="text-lg font-bold">Lançamentos do Caixa</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Identificação de usuário para todas as vendas, despesas e retiradas.
+              Movimentações e responsáveis.
             </p>
           </div>
           <span className="text-xs text-muted-foreground">
@@ -458,17 +468,17 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="responsive-table w-full text-left text-sm">
               <thead className="border-b border-border bg-muted/60 font-semibold text-xs">
                 <tr>
-                  <th className="p-4">Data / Hora</th>
-                  <th className="p-4">Tipo</th>
-                  <th className="p-4">Categoria</th>
-                  <th className="p-4">Descrição</th>
-                  <th className="p-4">Pagamento</th>
-                  <th className="p-4">Usuário Responsável</th>
-                  <th className="p-4 text-right">Valor</th>
-                  {user.role === 'ADMIN' && <th className="p-4 text-center">Ações</th>}
+                  <th scope="col" className="p-4">Data / Hora</th>
+                  <th scope="col" className="p-4">Tipo</th>
+                  <th scope="col" className="p-4">Categoria</th>
+                  <th scope="col" className="p-4">Descrição</th>
+                  <th scope="col" className="p-4">Pagamento</th>
+                  <th scope="col" className="p-4">Usuário Responsável</th>
+                  <th scope="col" className="p-4 text-right">Valor</th>
+                  {user.role === 'ADMIN' && <th scope="col" className="p-4 text-center">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -477,13 +487,13 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
                   const isPositive = t.type === 'INFLOW';
                   return (
                     <tr key={t.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="p-4 whitespace-nowrap tabular-nums text-xs">
+                      <td data-label="Data" className="p-4 whitespace-nowrap tabular-nums text-xs">
                         <div className="font-medium">{dt.toLocaleDateString('pt-BR')}</div>
                         <div className="text-[10px] text-muted-foreground">
                           {dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
-                      <td className="p-4 whitespace-nowrap">
+                      <td data-label="Tipo" className="p-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
                           isPositive 
                             ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
@@ -492,10 +502,10 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
                           {isPositive ? 'Entrada' : 'Saída'}
                         </span>
                       </td>
-                      <td className="p-4 whitespace-nowrap text-xs font-medium">
+                      <td data-label="Categoria" className="p-4 whitespace-nowrap text-xs font-medium">
                         {CATEGORY_LABELS[t.category] || t.category}
                       </td>
-                      <td className="p-4 max-w-[240px]">
+                      <td data-label="Descrição" className="p-4 max-w-[240px]">
                         <div className="font-medium text-xs truncate" title={t.description}>
                           {t.description}
                         </div>
@@ -505,22 +515,22 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
                           </div>
                         )}
                       </td>
-                      <td className="p-4 whitespace-nowrap text-xs text-muted-foreground">
+                      <td data-label="Pagamento" className="p-4 whitespace-nowrap text-xs text-muted-foreground">
                         {t.paymentMethod ? (PAYMENT_METHOD_LABELS[t.paymentMethod] || t.paymentMethod) : '-'}
                       </td>
-                      <td className="p-4 whitespace-nowrap text-xs">
+                      <td data-label="Responsável" className="p-4 whitespace-nowrap text-xs">
                         <div className="font-semibold text-foreground">{t.userName}</div>
                         <div className="text-[10px] text-muted-foreground">
                           {ROLE_LABELS[t.userRole as Role] || t.userRole}
                         </div>
                       </td>
-                      <td className={`p-4 text-right whitespace-nowrap font-bold tabular-nums text-sm ${
+                      <td data-label="Valor" className={`p-4 text-right whitespace-nowrap font-bold tabular-nums text-sm ${
                         isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
                       }`}>
                         {isPositive ? '+' : '-'}{formatCurrency(t.amount)}
                       </td>
                       {user.role === 'ADMIN' && (
-                        <td className="p-4 text-center whitespace-nowrap">
+                        <td data-label="Ações" className="p-4 text-center whitespace-nowrap">
                           <button
                             onClick={() => handleDeleteTransaction(t.id, t.category === 'SALE')}
                             disabled={busy}

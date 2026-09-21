@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Layers, AlertCircle, Check, HelpCircle } from 'lucide-react';
+import { Pencil, Trash2, Layers } from 'lucide-react';
 import type { CategoryModel } from '@/types/product';
 import { api, errorMessage } from '@/services/api';
+import CategoryIllustration from '@/components/CategoryIllustration';
+import { CATEGORY_ILLUSTRATIONS } from '@/lib/category-illustrations';
 
 interface CategoryManagerProps {
   categories: CategoryModel[];
   onRefresh: () => Promise<void>;
 }
 
-const EMOJI_PRESETS = ['💎', '💍', '👜', '💄', '🧸', '👑', '🛍️', '📿', '🌟', '✨', '🎀', '🕶️', '⌚', '🌸'];
 
 export default function CategoryManager({ categories, onRefresh }: CategoryManagerProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -118,7 +119,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             Categorias & Ilustrações
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Gerencie as seções da loja, nomes, ilustrações visuais (emojis/ícones) e regras de exclusão.
+            Organize as coleções e escolha uma ilustração 3D.
           </p>
         </div>
         {editingId && (
@@ -140,8 +141,8 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             </h4>
 
             <div>
-              <label className="block text-xs font-medium mb-1">Nome da Categoria</label>
-              <input
+              <label htmlFor="category-name" className="block text-xs font-medium mb-1">Nome da Categoria</label>
+              <input id="category-name"
                 className="field"
                 required
                 maxLength={80}
@@ -152,8 +153,8 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1">Identificador da URL (slug)</label>
-              <input
+              <label htmlFor="category-slug" className="block text-xs font-medium mb-1">Identificador da URL (slug)</label>
+              <input id="category-slug"
                 className="field text-xs font-mono"
                 required
                 maxLength={80}
@@ -164,32 +165,30 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1.5">Ilustração Visual (Emoji / Ícone)</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {EMOJI_PRESETS.map(preset => (
+              <p id="illustration-label" className="block text-sm font-medium mb-2">Ilustração 3D</p>
+              <div className="flex flex-wrap gap-2 mb-2" role="group" aria-labelledby="illustration-label">
+                {CATEGORY_ILLUSTRATIONS.map(preset => (
                   <button
-                    key={preset}
+                    key={preset.emoji}
                     type="button"
-                    onClick={() => setEmoji(preset)}
-                    className={`h-9 w-9 rounded-lg border text-lg flex items-center justify-center transition-all ${
-                      emoji === preset ? 'border-primary bg-primary/10 scale-110 shadow-sm' : 'border-border bg-card hover:bg-muted'
+                    onClick={() => setEmoji(preset.emoji)}
+                    aria-label={preset.label}
+                    aria-pressed={emoji === preset.emoji}
+                    title={preset.label}
+                    className={`h-12 w-12 rounded-lg border flex items-center justify-center transition-colors ${
+                      emoji === preset.emoji ? 'border-primary bg-primary/10 shadow-sm' : 'border-border bg-card hover:bg-muted'
                     }`}
                   >
-                    {preset}
+                    <CategoryIllustration emoji={preset.emoji} />
                   </button>
                 ))}
               </div>
-              <input
-                className="field text-sm"
-                value={emoji}
-                onChange={e => setEmoji(e.target.value)}
-                placeholder="Ou digite outro emoji personalizado"
-              />
+              <p className="text-xs text-muted-foreground">Ilustrações Fluent Emoji da Microsoft.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1">Descrição</label>
-              <textarea
+              <label htmlFor="category-description" className="block text-xs font-medium mb-1">Descrição</label>
+              <textarea id="category-description"
                 className="field min-h-20 text-xs"
                 maxLength={500}
                 value={description}
@@ -228,10 +227,10 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
                   <li key={cat.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20">
                     <div className="flex items-start gap-3 min-w-0">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
-                        {cat.emoji || '💎'}
+                        <CategoryIllustration emoji={cat.emoji} />
                       </span>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h5 className="font-semibold truncate">{cat.name}</h5>
                           <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             /{cat.slug}

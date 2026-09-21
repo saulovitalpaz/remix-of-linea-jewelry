@@ -7,11 +7,12 @@ import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { HttpError, text, number, normalizeUsername, roles, salesItems, validateSaleDate, validateTransaction, validateCustomItems } from './validation.js';
 import type { Role } from './validation.js';
+import { isProductImageKey } from './utils/object-storage.js';
 
-interface Dependencies { prisma: PrismaClient; jwtSecret: string; uploadImage: (buffer: Buffer, contentType?: string) => Promise<string> }
+interface Dependencies { prisma: PrismaClient; jwtSecret: string; uploadImage: (buffer: Buffer, contentType?: string) => Promise<string>; readImage?: (key: string) => Promise<{ body: Buffer; contentType: string }> }
 const safeUser = (user: { id: string; name: string; role: string }) => ({ id: user.id, name: user.name, role: user.role });
 
-export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
+export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Dependencies) {
   if (jwtSecret.length < 32) throw new Error('JWT_SECRET precisa ter ao menos 32 caracteres.');
   const app = express();
   app.disable('x-powered-by');
@@ -23,6 +24,12 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     next();
   });
   app.use(express.json({ limit: '64kb' }));
+  app.get('/api/images/*key', async (req, res) => {
+    const key = Array.isArray(req.params.key) ? req.params.key.join('/') : String(req.params.key);
+    if (!readImage || !isProductImageKey(key)) throw new HttpError(404, 'Imagem não encontrada.');
+    const image = await readImage(key);
+    res.set({ 'Content-Type': image.contentType, 'Cache-Control': 'public, max-age=31536000, immutable' }).send(image.body);
+  });
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 12, fieldSize: 16 * 1024 }, fileFilter: (_req, file, cb) => {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) return cb(new HttpError(400, 'Use JPEG, PNG ou WebP de até 5 MB.'));
     cb(null, true);
@@ -74,7 +81,7 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     const user = await prisma.adminUser.findFirst({ where: { OR: [{ username }, { email: username }] } });
     const valid = await bcrypt.compare(password, user?.passwordHash || dummyHash);
     if (!user || !valid || !roles.includes(user.role as Role)) throw new HttpError(401, 'Nome ou senha incorretos.');
-    const token = jwt.sign({ id: user.id }, jwtSecret, { algorithm: 'HS256', expiresIn: '8h', audience: 'chique-admin', issuer: 'chique-api' });
+    const token = jwt.sign({ id: user.id }, jwtSecret, { algorithm: 'HS256', expiresIn: '1d', audience: 'chique-admin', issuer: 'chique-api' });
     res.json({ token, user: safeUser(user) });
   });
   app.get('/api/auth/me', authenticate, (_req, res) => res.json(res.locals.user));

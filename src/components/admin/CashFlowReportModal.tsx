@@ -83,14 +83,14 @@ export default function CashFlowReportModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 backdrop-blur-sm print:static print:bg-transparent print:p-0">
       <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl border border-border bg-card shadow-2xl print:max-h-none print:border-none print:shadow-none print:w-full">
         {/* Modal Toolbar - Hidden during print */}
-        <div className="flex items-center justify-between border-b border-border p-4 print:hidden">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4 print:hidden">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-bold">Relatório de Fluxo de Caixa</h3>
             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
               {transactions.length} registros
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleExportCsv}
               className="button-secondary flex items-center gap-1.5 text-xs py-1.5 px-3"
@@ -211,16 +211,16 @@ export default function CashFlowReportModal({
               </p>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-border">
-                <table className="w-full text-left text-xs">
+                <table className="responsive-table w-full text-left text-xs">
                   <thead className="border-b border-border bg-muted/70 font-semibold">
                     <tr>
-                      <th className="p-3">Data / Hora</th>
-                      <th className="p-3">Tipo</th>
-                      <th className="p-3">Categoria</th>
-                      <th className="p-3">Descrição / Detalhes</th>
-                      <th className="p-3">Pagamento</th>
-                      <th className="p-3">Responsável</th>
-                      <th className="p-3 text-right">Valor</th>
+                      <th scope="col" className="p-3">Data / Hora</th>
+                      <th scope="col" className="p-3">Tipo</th>
+                      <th scope="col" className="p-3">Categoria</th>
+                      <th scope="col" className="p-3">Descrição / Detalhes</th>
+                      <th scope="col" className="p-3">Pagamento</th>
+                      <th scope="col" className="p-3">Responsável</th>
+                      <th scope="col" className="p-3 text-right">Valor</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -229,34 +229,34 @@ export default function CashFlowReportModal({
                       const isPositive = t.type === 'INFLOW';
                       return (
                         <tr key={t.id} className="hover:bg-muted/30">
-                          <td className="p-3 whitespace-nowrap tabular-nums">
+                          <td data-label="Data" className="p-3 whitespace-nowrap tabular-nums">
                             <div>{dt.toLocaleDateString('pt-BR')}</div>
                             <div className="text-[10px] text-muted-foreground">
                               {dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </td>
-                          <td className="p-3 whitespace-nowrap">
+                          <td data-label="Tipo" className="p-3 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${isPositive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
                               {isPositive ? 'Entrada' : 'Saída'}
                             </span>
                           </td>
-                          <td className="p-3 whitespace-nowrap font-medium">
+                          <td data-label="Categoria" className="p-3 whitespace-nowrap font-medium">
                             {CATEGORY_LABELS[t.category] || t.category}
                           </td>
-                          <td className="p-3 max-w-[200px] truncate" title={t.description}>
+                          <td data-label="Descrição" className="p-3 max-w-[200px] truncate" title={t.description}>
                             <div>{t.description}</div>
                             {t.notes && <div className="text-[10px] text-muted-foreground truncate">{t.notes}</div>}
                           </td>
-                          <td className="p-3 whitespace-nowrap text-muted-foreground">
+                          <td data-label="Pagamento" className="p-3 whitespace-nowrap text-muted-foreground">
                             {t.paymentMethod ? (PAYMENT_METHOD_LABELS[t.paymentMethod] || t.paymentMethod) : '-'}
                           </td>
-                          <td className="p-3 whitespace-nowrap">
+                          <td data-label="Responsável" className="p-3 whitespace-nowrap">
                             <div className="font-semibold text-foreground">{t.userName}</div>
                             <div className="text-[10px] text-muted-foreground">
                               {ROLE_LABELS[t.userRole as Role] || t.userRole}
                             </div>
                           </td>
-                          <td className={`p-3 text-right whitespace-nowrap font-bold tabular-nums ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
+                          <td data-label="Valor" className={`p-3 text-right whitespace-nowrap font-bold tabular-nums ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'}`}>
                             {isPositive ? '+' : '-'}{formatCurrency(t.amount)}
                           </td>
                         </tr>

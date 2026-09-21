@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Package, AlertTriangle, Layers, ShoppingBag } from 'lucide-react';
-import type { Product, CategoryModel } from '@/types/product';
+import { Package, AlertTriangle, ShoppingBag } from 'lucide-react';
+import type { Product } from '@/types/product';
 import type { CashFlowData } from '@/types/cashFlow';
 import { api, errorMessage } from '@/services/api';
 import { formatCurrency } from '@/lib/format';
 
 interface AdminDashboardProps {
   products: Product[];
-  categories: CategoryModel[];
 }
 
-export default function AdminDashboard({ products, categories }: AdminDashboardProps) {
+export default function AdminDashboard({ products }: AdminDashboardProps) {
   const [monthlySales, setMonthlySales] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -34,22 +33,21 @@ export default function AdminDashboard({ products, categories }: AdminDashboardP
   const outOfStockCount = products.filter(product => product.stock === 0).length;
   const totalCatalogValue = products.reduce((sum, product) => sum + Math.round(product.price * 100) * product.stock, 0) / 100;
   const metrics = [
-    { label: 'Produtos', value: products.length, icon: Package },
-    { label: 'Unidades', value: totalStock, icon: ShoppingBag },
-    { label: 'Categorias', value: categories.length, icon: Layers },
-    { label: 'Esgotados', value: outOfStockCount, icon: AlertTriangle },
+    { label: 'Produtos cadastrados', value: products.length, icon: Package },
+    { label: 'Unidades em estoque', value: totalStock, icon: ShoppingBag },
+    { label: 'Produtos esgotados', value: outOfStockCount, icon: AlertTriangle },
   ];
 
   return (
     <div className="space-y-5" aria-label="Painel de Controle Administrador">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {metrics.map(metric => (
-          <div key={metric.label} className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+          <div key={metric.label} className="admin-stat min-w-0 p-3 sm:p-5">
+            <div className="flex items-start justify-between gap-2 text-sm text-muted-foreground">
               <span>{metric.label}</span>
-              <metric.icon size={17} className="shrink-0" aria-hidden="true" />
+              <metric.icon size={17} className="hidden shrink-0 sm:block" aria-hidden="true" />
             </div>
-            <p className={`mt-1 text-2xl font-bold tabular-nums ${metric.label === 'Esgotados' && metric.value > 0 ? 'text-destructive' : ''}`}>
+            <p className={`mt-auto text-2xl font-semibold tabular-nums ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'text-destructive' : ''}`}>
               {metric.value}
             </p>
           </div>

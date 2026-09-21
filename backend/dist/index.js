@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { createApp } from './app.js';
-import { uploadToObjectStorage } from './utils/object-storage.js';
+import { uploadToObjectStorage, readFromObjectStorage } from './utils/object-storage.js';
 import { upgradeCashFlow } from './schema.js';
 const prisma = new PrismaClient();
-const app = createApp({ prisma, jwtSecret: process.env.JWT_SECRET || '', uploadImage: uploadToObjectStorage });
+const app = createApp({ prisma, jwtSecret: process.env.JWT_SECRET || '', uploadImage: uploadToObjectStorage, readImage: readFromObjectStorage });
 const port = Number(process.env.PORT || 3001);
 async function start() {
     try {

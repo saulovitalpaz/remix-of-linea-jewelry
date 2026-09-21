@@ -2,6 +2,7 @@ import type { Product, CategoryModel } from '../types/product';
 import { CATEGORIES_DATA } from '../types/product';
 import type { MarketingPopup } from '../types/admin';
 import { api, ApiError } from './api';
+import { categoryIllustration } from '@/lib/category-illustrations';
 
 export const ProductService = {
   getProducts: () => api<Product[]>('/products'),
@@ -16,7 +17,7 @@ export const ProductService = {
     const categories = await api<CategoryModel[]>('/categories');
     return categories.map(category => ({
       ...category,
-      icon: CATEGORIES_DATA[category.slug as keyof typeof CATEGORIES_DATA]?.icon,
+      icon: categoryIllustration(category.emoji) || CATEGORIES_DATA[category.slug as keyof typeof CATEGORIES_DATA]?.icon,
     }));
   },
   getActivePopup: () => api<MarketingPopup | null>('/popup/active'),

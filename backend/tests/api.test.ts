@@ -101,7 +101,12 @@ test('HTTP authorization, validation, stock and authentication', { skip: !create
     assert.equal('passwordHash' in userList[0], false);
     assert.equal('email' in userList[0], false);
     assert.equal((await request('/users', 'POST', 'admin', { name: 'Novo', password: 'long-password', role: 'ROOT' })).status, 400);
-    assert.equal((await request('/auth/login', 'POST', undefined, { username: 'Bárbara Paz', password: 'a-test-password' })).status, 200);
+    const loginResponse = await request('/auth/login', 'POST', undefined, { username: 'Bárbara Paz', password: 'a-test-password' });
+    assert.equal(loginResponse.status, 200);
+    const loginData = await loginResponse.json();
+    const decoded = jwt.decode(loginData.token) as { iat: number; exp: number };
+    assert.ok(decoded.exp - decoded.iat >= 23 * 60 * 60);
+    assert.ok(decoded.exp - decoded.iat <= 24 * 60 * 60 + 5);
     assert.equal((await request('/auth/login', 'POST', undefined, { username: 'private@example.com', password: 'a-test-password' })).status, 200);
     assert.equal((await request('/auth/login', 'POST', undefined, { username: {}, password: [] })).status, 400);
     assert.equal((await request('/products', 'POST', 'manager', { name: 'Produto', price: -1, stock: 2, categoryId: 'x' })).status, 400);

@@ -12,6 +12,7 @@ import { ROLE_LABELS } from '@/types/admin';
 import { ProductService } from '@/services/ProductService';
 import { api, errorMessage, session } from '@/services/api';
 import { formatCurrency } from '@/lib/format';
+import '@/admin.css';
 
 interface Draft {
   id?: string;
@@ -62,6 +63,7 @@ export default function Admin() {
   const [productSection, setProductSection] = useState<'products' | 'categories'>('products');
   const [draft, setDraft] = useState<Draft | null>(null);
   const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>();
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [sales, setSales] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
@@ -80,6 +82,10 @@ export default function Admin() {
   const [message, setMessage] = useState('');
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
+
+  useEffect(() => {
+    return () => { if (imagePreview) URL.revokeObjectURL(imagePreview); };
+  }, [imagePreview]);
 
   const logout = () => {
     session.clear();
@@ -129,10 +135,8 @@ export default function Admin() {
   useEffect(() => {
     let live = true;
     if (user) {
-      const defaultTab = user.role === 'ADMIN' ? 'dashboard' : 'sales';
-      setTab(current => current || defaultTab);
-      Promise.all([ProductService.getProducts(), ProductService.getCategories(), loadSalesHistory()])
-        .then(([items, groups]) => { if (live) { setProducts(items); setCategories(groups); } })
+      Promise.all([ProductService.getProducts(), ProductService.getCategories(), api<SalesHistoryData>('/sales/history', {}, true).catch(() => null)])
+        .then(([items, groups, history]) => { if (live) { setProducts(items); setCategories(groups); setSalesHistory(history); } })
         .catch(e => { if (live) setError(errorMessage(e)); })
         .finally(() => { if (live) setLoading(false); });
     }
@@ -140,9 +144,11 @@ export default function Admin() {
   }, [user]);
 
   useEffect(() => {
+    let live = true;
     if (user && tab === 'sales') {
-      loadSalesHistory();
+      api<SalesHistoryData>('/sales/history', {}, true).then(data => { if (live) setSalesHistory(data); }).catch(() => {});
     }
+    return () => { live = false; };
   }, [user, tab]);
 
 
@@ -218,17 +224,17 @@ export default function Admin() {
   );
 
   const navItems = user.role === 'ADMIN' ? [
-    { id: 'dashboard', label: 'Painel Geral', icon: LayoutDashboard },
-    { id: 'cashflow', label: 'Fluxo de Caixa', icon: CircleDollarSign },
-    { id: 'sales', label: 'Registrar vendas', icon: Receipt },
-    { id: 'products', label: 'Produtos e estoque', icon: Package },
-    { id: 'settings', label: 'Configurações', icon: SettingsIcon },
+    { id: 'dashboard', label: 'Painel', icon: LayoutDashboard },
+    { id: 'cashflow', label: 'Caixa', icon: CircleDollarSign },
+    { id: 'products', label: 'Produtos', icon: Package },
+    { id: 'settings', label: 'Ajustes', icon: SettingsIcon },
   ] : [
-    { id: 'sales', label: 'Registrar vendas', icon: Receipt },
-    { id: 'products', label: 'Produtos e estoque', icon: Package },
+    { id: 'sales', label: 'Vendas', icon: Receipt },
+    { id: 'products', label: 'Produtos', icon: Package },
   ];
 
   const activeTab = tab || (user.role === 'ADMIN' ? 'dashboard' : 'sales');
+  const activeNav = user.role === 'ADMIN' && activeTab === 'sales' ? 'cashflow' : activeTab;
 
   // Available image URLs from existing products in same category (or all)
   const categoryGalleryImages = Array.from(
@@ -239,17 +245,17 @@ export default function Admin() {
     )
   );
 
-  const previewImageSrc = image ? URL.createObjectURL(image) : draft?.imageUrl || null;
+  const previewImageSrc = image ? imagePreview : draft?.imageUrl || null;
 
   return (
-    <div className="min-h-screen bg-muted/30 pb-12">
+    <div className="admin-shell min-h-screen bg-muted/30">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="store-container flex min-h-16 items-center justify-between gap-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <Link to="/" className="shrink-0"><img src="/Logo 1.png" alt="Chique Detalhes — início" width={64} height={56} className="h-14 w-16 object-contain" /></Link>
             <p className="truncate text-sm font-semibold">{user.name}</p>
           </div>
-          <button className="button-secondary shrink-0 px-3 sm:px-4" onClick={logout}>
+          <button aria-label="Sair da conta" className="button-secondary shrink-0 px-3 sm:px-4" onClick={logout}>
             <LogOut size={18} aria-hidden="true" />
             <span className="hidden sm:inline">Sair</span>
           </button>
@@ -267,18 +273,19 @@ export default function Admin() {
           </div>
         </div>}
 
-        <nav aria-label="Seções do painel" className="mb-6 grid grid-cols-2 gap-2 border-b border-border pb-3 sm:grid-cols-3 lg:flex lg:flex-wrap sm:mb-8 sm:pb-5">
+        <nav aria-label="Seções do painel" className="admin-bottom-nav">
           {navItems.map(item => (
             <button
               key={item.id}
-              aria-current={activeTab === item.id ? 'page' : undefined}
-              className={(activeTab === item.id ? 'button-primary' : 'button-secondary') + ' min-w-0 min-h-11 px-3 text-xs sm:text-sm lg:flex-1'}
+              aria-current={activeNav === item.id ? 'page' : undefined}
+              className={'admin-nav-item' + (activeNav === item.id ? ' is-active' : '')}
               onClick={() => {
                 if (draft && !window.confirm('Descartar as alterações do produto?')) return;
                 setDraft(null);
                 setTab(item.id);
                 setError('');
                 setMessage('');
+                window.scrollTo({ top: 0 });
               }}
             >
               <item.icon size={18} className="shrink-0" aria-hidden="true" />
@@ -286,6 +293,13 @@ export default function Admin() {
             </button>
           ))}
         </nav>
+
+        {user.role === 'ADMIN' && activeNav === 'cashflow' && (
+          <nav aria-label="Fluxo de caixa" className="mb-6 flex flex-wrap gap-2">
+            <button className={activeTab === 'cashflow' ? 'button-primary' : 'button-secondary'} aria-current={activeTab === 'cashflow' ? 'page' : undefined} onClick={() => setTab('cashflow')}><CircleDollarSign size={18} aria-hidden="true" />Fluxo de caixa</button>
+            <button className={activeTab === 'sales' ? 'button-primary' : 'button-secondary'} aria-current={activeTab === 'sales' ? 'page' : undefined} onClick={() => setTab('sales')}><Receipt size={18} aria-hidden="true" />Registrar venda</button>
+          </nav>
+        )}
 
         {error && <p className="notice-error mb-6" role="alert">{error}</p>}
         {message && <p className="notice-success mb-6" role="status">{message}</p>}
@@ -309,7 +323,6 @@ export default function Admin() {
         {activeTab === 'dashboard' && user.role === 'ADMIN' ? (
           <AdminDashboard
             products={products}
-            categories={categories}
           />
         ) : activeTab === 'cashflow' && user.role === 'ADMIN' ? (
           <CashFlowManager user={user} />
@@ -371,7 +384,7 @@ export default function Admin() {
               <form className="admin-panel mb-8 space-y-5 border-2 border-primary/20" onSubmit={saveProduct}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold">{draft.id ? 'Editar produto' : 'Novo produto'}</h3>
-                  <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => { setDraft(null); setImage(null); }}>
+                  <button type="button" aria-label="Fechar edição do produto" className="icon-button text-muted-foreground hover:text-foreground" onClick={() => { setDraft(null); setImage(null); }}>
                     <X size={20} />
                   </button>
                 </div>
@@ -426,7 +439,7 @@ export default function Admin() {
                     <div className="flex-1 space-y-2">
                       <label className="block text-xs font-medium text-muted-foreground">
                         Fazer upload de nova foto (JPEG, PNG, WebP; até 5 MB):
-                        <input key={draft.id || 'new'} className="field mt-1 text-xs" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => setImage(e.target.files?.[0] || null)} />
+                        <input key={draft.id || 'new'} className="field mt-1 text-xs" type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { const file = e.target.files?.[0] || null; setImage(file); setImagePreview(file ? URL.createObjectURL(file) : undefined); }} />
                       </label>
                       {categoryGalleryImages.length > 0 && (
                         <button
@@ -449,7 +462,7 @@ export default function Admin() {
                         <h4 className="font-bold text-lg flex items-center gap-2">
                           <ImageIcon size={20} /> Galeria de Imagens da Categoria
                         </h4>
-                        <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setShowGalleryModal(false)}>
+                        <button type="button" aria-label="Fechar galeria" className="icon-button text-muted-foreground hover:text-foreground" onClick={() => setShowGalleryModal(false)}>
                           <X size={20} />
                         </button>
                       </div>
@@ -500,7 +513,7 @@ export default function Admin() {
 
             {loading ? <p role="status">Carregando produtos…</p> : !products.length ? <div className="status-panel">Nenhum produto cadastrado.</div> : (
               <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-                <table className="min-w-[40rem] w-full text-left text-sm">
+                <table className="responsive-table w-full text-left text-sm">
                   <caption className="sr-only">Produtos, preços, estoque e ações</caption>
                   <thead className="border-b border-border bg-muted">
                     <tr>
@@ -515,10 +528,10 @@ export default function Admin() {
                     {products.map(product => (
                       <tr key={product.id} className="hover:bg-muted/20">
                         {activeTab === 'products' && (
-                          <td className="p-4 text-center">
+                          <td data-label="Destaque" className="p-4 text-center">
                             <button
                               type="button"
-                              disabled={busy}
+                              disabled={busy || !canManage}
                               onClick={() => toggleFeaturedProduct(product)}
                               className={`p-1.5 rounded-lg transition-colors ${product.featured ? 'text-amber-500 hover:bg-amber-500/10' : 'text-muted-foreground/40 hover:text-amber-500 hover:bg-muted'}`}
                               title={product.featured ? 'Remover dos destaques da homepage' : 'Destacar na homepage'}
@@ -527,7 +540,7 @@ export default function Admin() {
                             </button>
                           </td>
                         )}
-                        <td className="p-4">
+                        <td data-label="Produto" className="p-4">
                           <div className="flex items-center gap-3">
                             {product.imageUrl ? (
                               <img src={product.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover bg-muted" />
@@ -544,13 +557,13 @@ export default function Admin() {
                             </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap p-4 tabular-nums font-semibold">{formatCurrency(product.price)}</td>
-                        <td className="p-4 tabular-nums">
+                        <td data-label="Preço" className="whitespace-nowrap p-4 tabular-nums font-semibold">{formatCurrency(product.price)}</td>
+                        <td data-label="Estoque" className="p-4 tabular-nums">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${product.stock > 0 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
                             {product.stock} un.
                           </span>
                         </td>
-                        <td className="p-4">
+                        <td data-label={activeTab === 'sales' ? 'Quantidade vendida' : 'Ações'} className="p-4">
                           {activeTab === 'sales' ? (
                             <input
                               aria-label={'Quantidade vendida de ' + product.name}
@@ -744,26 +757,26 @@ export default function Admin() {
 
                     {customItems.length > 0 && (
                       <div className="rounded-xl border border-border overflow-hidden mt-3">
-                        <table className="w-full text-left text-xs">
+                        <table className="responsive-table w-full text-left text-xs">
                           <thead className="bg-muted/60 text-muted-foreground font-semibold">
                             <tr>
-                              <th className="p-3">Item avulso</th>
-                              <th className="p-3 text-center">Qtd</th>
-                              <th className="p-3">Valor unitário</th>
-                              <th className="p-3">Subtotal</th>
-                              <th className="p-3 w-10 text-center">Remover</th>
+                              <th scope="col" className="p-3">Item avulso</th>
+                              <th scope="col" className="p-3 text-center">Qtd</th>
+                              <th scope="col" className="p-3">Valor unitário</th>
+                              <th scope="col" className="p-3">Subtotal</th>
+                              <th scope="col" className="p-3 w-10 text-center">Remover</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border bg-background">
                             {customItems.map(ci => (
                               <tr key={ci.id} className="hover:bg-muted/20">
-                                <td className="p-3 font-medium">{ci.description}</td>
-                                <td className="p-3 text-center tabular-nums">{ci.quantity}</td>
-                                <td className="p-3 tabular-nums">{formatCurrency(parseFloat(ci.price))}</td>
-                                <td className="p-3 font-semibold tabular-nums">
+                                <td data-label="Item avulso" className="p-3 font-medium">{ci.description}</td>
+                                <td data-label="Quantidade" className="p-3 text-center tabular-nums">{ci.quantity}</td>
+                                <td data-label="Valor unitário" className="p-3 tabular-nums">{formatCurrency(parseFloat(ci.price))}</td>
+                                <td data-label="Subtotal" className="p-3 font-semibold tabular-nums">
                                   {formatCurrency(parseFloat(ci.price) * ci.quantity)}
                                 </td>
-                                <td className="p-3 text-center">
+                                <td data-label="Remover" className="p-3 text-center">
                                   <button
                                     type="button"
                                     className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors"
@@ -878,20 +891,20 @@ export default function Admin() {
 
                     {showRecentSales && (
                       <div className="overflow-x-auto rounded-xl border border-border">
-                        <table className="w-full text-left text-sm">
+                        <table className="responsive-table w-full text-left text-sm">
                           <thead className="bg-muted/60 text-muted-foreground text-xs font-semibold">
                             <tr>
-                              <th className="p-3">Data / Registro</th>
-                              <th className="p-3">Descrição / Observações</th>
-                              <th className="p-3">Pagamento</th>
-                              <th className="p-3 text-center">Peças</th>
-                              <th className="p-3 text-right">Total</th>
+                              <th scope="col" className="p-3">Data / Registro</th>
+                              <th scope="col" className="p-3">Descrição / Observações</th>
+                              <th scope="col" className="p-3">Pagamento</th>
+                              <th scope="col" className="p-3 text-center">Peças</th>
+                              <th scope="col" className="p-3 text-right">Total</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border bg-background text-xs">
                             {salesHistory.userRecentSales.map(sale => (
                               <tr key={sale.id} className="hover:bg-muted/20">
-                                <td className="p-3 whitespace-nowrap">
+                                <td data-label="Data" className="p-3 whitespace-nowrap">
                                   <span className="font-medium text-foreground block">
                                     {new Date(sale.date).toLocaleDateString('pt-BR')}
                                   </span>
@@ -899,7 +912,7 @@ export default function Admin() {
                                     {new Date(sale.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </td>
-                                <td className="p-3">
+                                <td data-label="Descrição" className="p-3">
                                   <p className="font-medium text-foreground">{sale.description || 'Venda registrada'}</p>
                                   {sale.notes && (
                                     <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 italic">
@@ -907,15 +920,15 @@ export default function Admin() {
                                     </p>
                                   )}
                                 </td>
-                                <td className="p-3 whitespace-nowrap">
+                                <td data-label="Pagamento" className="p-3 whitespace-nowrap">
                                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-foreground">
                                     {sale.paymentMethod || 'Não informado'}
                                   </span>
                                 </td>
-                                <td className="p-3 text-center font-medium tabular-nums">
+                                <td data-label="Peças" className="p-3 text-center font-medium tabular-nums">
                                   {sale.itemsSold} un.
                                 </td>
-                                <td className="p-3 text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                                <td data-label="Total" className="p-3 text-right font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                                   {formatCurrency(sale.totalRevenue)}
                                 </td>
                               </tr>
