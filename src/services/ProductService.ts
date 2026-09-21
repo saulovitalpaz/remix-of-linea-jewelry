@@ -11,6 +11,7 @@ export const ProductService = {
   },
   saveProduct: (body: FormData, id?: string) => api<Product>(id ? '/products/' + encodeURIComponent(id) : '/products', { method: id ? 'PUT' : 'POST', body }, true),
   deleteProduct: (id: string) => api<void>('/products/' + encodeURIComponent(id), { method: 'DELETE' }, true),
+  toggleFeatured: (id: string) => api<Product>('/products/' + encodeURIComponent(id) + '/toggle-featured', { method: 'PUT' }, true),
   getCategories: async (): Promise<CategoryModel[]> => {
     const categories = await api<CategoryModel[]>('/categories');
     return categories.map(category => ({

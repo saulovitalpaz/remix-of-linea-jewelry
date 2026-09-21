@@ -89,18 +89,35 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     const passwordHash = await bcrypt.hash(password, 12);
     res.status(201).json(safeUser(await prisma.adminUser.create({ data: { name, username, role, passwordHash } })));
   });
-  app.get('/api/categories', async (_req, res) => res.json(await prisma.category.findMany({ orderBy: { name: 'asc' } })));
+  app.get('/api/categories', async (_req, res) => res.json(await prisma.category.findMany({ include: { _count: { select: { products: true } } }, orderBy: { name: 'asc' } })));
   app.post('/api/categories', ...manage, async (req, res) => {
     const name = text(req.body?.name, 'Nome');
     const slug = text(req.body?.slug, 'Identificador', 80);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new HttpError(400, 'Identificador de categoria inválido.');
-    const description = req.body.description ? text(req.body.description, 'Descrição', 2000) : '';
-    res.status(201).json(await prisma.category.create({ data: { name, slug, description } }));
+    const description = req.body?.description ? text(req.body.description, 'Descrição', 2000) : '';
+    const emoji = req.body?.emoji ? String(req.body.emoji).trim().slice(0, 30) : null;
+    res.status(201).json(await prisma.category.create({ data: { name, slug, description, emoji } }));
+  });
+  app.put('/api/categories/:id', ...manage, async (req, res) => {
+    const id = String(req.params.id);
+    const name = text(req.body?.name, 'Nome');
+    const slug = text(req.body?.slug, 'Identificador', 80);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new HttpError(400, 'Identificador de categoria inválido.');
+    const description = req.body?.description ? text(req.body.description, 'Descrição', 2000) : '';
+    const emoji = req.body?.emoji ? String(req.body.emoji).trim().slice(0, 30) : null;
+    res.json(await prisma.category.update({ where: { id }, data: { name, slug, description, emoji } }));
+  });
+  app.delete('/api/categories/:id', ...manage, async (req, res) => {
+    const id = String(req.params.id);
+    const count = await prisma.product.count({ where: { categoryId: id } });
+    if (count > 0) throw new HttpError(400, `Esta categoria possui ${count} produto(s) vinculado(s). Reclassifique os produtos antes de excluí-la.`);
+    await prisma.category.delete({ where: { id } });
+    res.status(204).end();
   });
   app.get('/api/products', async (req, res) => {
     const slug = req.query.categorySlug;
     if (slug !== undefined && typeof slug !== 'string') throw new HttpError(400, 'Categoria inválida.');
-    res.json(await prisma.product.findMany({ where: slug ? { category: { slug } } : {}, include: { category: true }, orderBy: [{ createdAt: 'desc' }, { id: 'asc' }] }));
+    res.json(await prisma.product.findMany({ where: slug ? { category: { slug } } : {}, include: { category: true }, orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }] }));
   });
   app.get('/api/products/:id', async (req, res) => {
     const product = await prisma.product.findUnique({ where: { id: String(req.params.id) }, include: { category: true } });
@@ -116,17 +133,25 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     const category = await prisma.category.findFirst({ where: { OR: [{ id: categoryId }, { slug: categoryId }] } });
     if (!category) throw new HttpError(400, 'Categoria não encontrada.');
     const description = body.description ? text(body.description, 'Descrição', 5000) : '';
-    return { name, price, stock, categoryId: category.id, description };
+    const featured = Boolean(body.featured);
+    return { name, price, stock, categoryId: category.id, description, featured };
   }
   app.post('/api/products', ...manage, upload.single('image'), async (req, res) => {
     const data = await productData(req.body || {});
-    const image = req.file ? await imageUrl(req.file) : null;
+    const customUrl = typeof req.body?.imageUrl === 'string' && req.body.imageUrl.trim() ? req.body.imageUrl.trim() : null;
+    const image = req.file ? await imageUrl(req.file) : customUrl;
     res.status(201).json(await prisma.product.create({ data: { ...data, imageUrl: image }, include: { category: true } }));
   });
   app.put('/api/products/:id', ...manage, upload.single('image'), async (req, res) => {
     const data = await productData(req.body || {});
-    const image = req.file ? { imageUrl: await imageUrl(req.file) } : {};
+    const customUrl = typeof req.body?.imageUrl === 'string' && req.body.imageUrl.trim() ? req.body.imageUrl.trim() : undefined;
+    const image = req.file ? { imageUrl: await imageUrl(req.file) } : (customUrl !== undefined ? { imageUrl: customUrl } : {});
     res.json(await prisma.product.update({ where: { id: String(req.params.id) }, data: { ...data, ...image }, include: { category: true } }));
+  });
+  app.put('/api/products/:id/toggle-featured', ...manage, async (req, res) => {
+    const product = await prisma.product.findUnique({ where: { id: String(req.params.id) } });
+    if (!product) throw new HttpError(404, 'Produto não encontrado.');
+    res.json(await prisma.product.update({ where: { id: product.id }, data: { featured: !product.featured }, include: { category: true } }));
   });
   app.delete('/api/products/:id', ...manage, async (req, res) => {
     await prisma.product.deleteMany({ where: { id: String(req.params.id) } }); res.status(204).end();
