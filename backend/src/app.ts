@@ -85,7 +85,7 @@ export function createApp({ prisma, jwtSecret, uploadImage }: Dependencies) {
     const role = req.body?.role;
     const password = req.body?.password;
     if (!roles.includes(role)) throw new HttpError(400, 'Selecione um perfil válido.');
-    if (typeof password !== 'string' || password.length < 12 || Buffer.byteLength(password) > 72) throw new HttpError(400, 'Use uma senha de pelo menos 12 caracteres e até 72 bytes.');
+    if (typeof password !== 'string' || password.length < 6 || Buffer.byteLength(password) > 72) throw new HttpError(400, 'Use uma senha de pelo menos 6 caracteres e até 72 bytes.');
     const passwordHash = await bcrypt.hash(password, 12);
     res.status(201).json(safeUser(await prisma.adminUser.create({ data: { name, username, role, passwordHash } })));
   });

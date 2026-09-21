@@ -7,14 +7,12 @@ const app = createApp({ prisma, jwtSecret: process.env.JWT_SECRET || '', uploadI
 const port = Number(process.env.PORT || 3001);
 async function start() {
     try {
-        await prisma.$executeRawUnsafe(`
-      ALTER TABLE "AdminUser" ALTER COLUMN "email" DROP NOT NULL;
-      ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "name" TEXT;
-      ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "username" TEXT;
-      ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "role" TEXT NOT NULL DEFAULT 'SELLER';
-      UPDATE "AdminUser" SET "name" = COALESCE("name", "email"), "username" = lower(trim("email")), "role" = 'ADMIN' WHERE "username" IS NULL;
-      CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_username_key" ON "AdminUser"("username");
-    `);
+        await prisma.$executeRawUnsafe('ALTER TABLE "AdminUser" ALTER COLUMN "email" DROP NOT NULL;');
+        await prisma.$executeRawUnsafe('ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "name" TEXT;');
+        await prisma.$executeRawUnsafe('ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "username" TEXT;');
+        await prisma.$executeRawUnsafe('ALTER TABLE "AdminUser" ADD COLUMN IF NOT EXISTS "role" TEXT NOT NULL DEFAULT \'SELLER\';');
+        await prisma.$executeRawUnsafe('UPDATE "AdminUser" SET "name" = COALESCE("name", "email"), "username" = lower(trim("email")), "role" = \'ADMIN\' WHERE "username" IS NULL;');
+        await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_username_key" ON "AdminUser"("username");');
     }
     catch (e) {
         console.warn('DB schema sync notice:', e instanceof Error ? e.message : e);
