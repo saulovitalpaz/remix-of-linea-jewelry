@@ -43,3 +43,5 @@ Validação: builds frontend/backend e oito testes de backend aprovados, incluin
 ## Sessão
 
 O acesso administrativo permanece salvo no `localStorage` do navegador por 24 horas, permitindo reabrir o webapp e compartilhar a sessão entre abas no mesmo dispositivo. O frontend remove o token quando a janela local vence; o backend também emite JWT com expiração de um dia, portanto a sessão não pode ser prolongada apenas alterando o relógio da interface. Sair remove imediatamente o token e o prazo salvo.
+
+Quando o navegador expõe a instalação PWA, o cabeçalho do painel mostra `Instalar app`. O botão usa o prompt nativo, desaparece após a instalação e não aparece quando o painel já está em modo standalone. Navegadores que não oferecem o evento de instalação continuam usando o painel normalmente.

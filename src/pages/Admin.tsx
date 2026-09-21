@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Package, Settings as SettingsIcon, Receipt, LogOut, Plus, Pencil, Trash2, Layers, Star, ImageIcon, X, Check, CircleDollarSign } from 'lucide-react';
+import { LayoutDashboard, Package, Settings as SettingsIcon, Receipt, LogOut, Plus, Pencil, Trash2, Layers, Star, ImageIcon, X, Check, CircleDollarSign, Download } from 'lucide-react';
 import Settings from '@/components/admin/Settings';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import CategoryManager from '@/components/admin/CategoryManager';
@@ -52,6 +52,11 @@ interface SalesHistoryData {
 
 const emptyDraft: Draft = { name: '', price: '', stock: '0', categoryId: '', description: '', imageUrl: '', featured: false };
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export default function Admin() {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [checking, setChecking] = useState(() => !!session.get());
@@ -80,12 +85,36 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER';
 
   useEffect(() => {
     return () => { if (imagePreview) URL.revokeObjectURL(imagePreview); };
   }, [imagePreview]);
+
+  useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches;
+    if (standalone) return;
+    const onBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => setInstallPrompt(null);
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  async function installWebApp() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === 'accepted') setInstallPrompt(null);
+  }
 
   const logout = () => {
     session.clear();
@@ -255,10 +284,19 @@ export default function Admin() {
             <Link to="/" className="shrink-0"><img src="/Logo 1.png" alt="Chique Detalhes — início" width={64} height={56} className="h-14 w-16 object-contain" /></Link>
             <p className="truncate text-sm font-semibold">{user.name}</p>
           </div>
-          <button aria-label="Sair da conta" className="button-secondary shrink-0 px-3 sm:px-4" onClick={logout}>
-            <LogOut size={18} aria-hidden="true" />
-            <span className="hidden sm:inline">Sair</span>
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {installPrompt && (
+              <button className="button-secondary px-3 sm:px-4" onClick={installWebApp}>
+                <Download size={18} aria-hidden="true" />
+                <span className="hidden sm:inline">Instalar app</span>
+                <span className="sr-only sm:hidden">Instalar webapp</span>
+              </button>
+            )}
+            <button aria-label="Sair da conta" className="button-secondary px-3 sm:px-4" onClick={logout}>
+              <LogOut size={18} aria-hidden="true" />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
+          </div>
         </div>
       </header>
 
