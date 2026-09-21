@@ -41,7 +41,7 @@ export default function Index() {
 
   return <div className="min-h-screen"><MarketingModal /><Header /><main id="main-content">
     <section className="store-container py-10 text-center md:py-20">
-      <img src="/Logo 1.png" alt="Chique Detalhes" width={320} height={180} fetchPriority="high" className="mx-auto mb-6 h-28 w-auto object-contain md:h-40" />
+      <img src="/logo-completo.png" alt="Chique Detalhes" width={1355} height={1160} fetchPriority="high" className="mx-auto mb-6 h-44 w-auto max-w-full object-contain md:h-60" />
       <p className="mb-4 text-xs font-semibold uppercase tracking-[.2em] text-primary">Acessórios, beleza e delicadeza</p>
       <h1 className="mx-auto max-w-3xl text-3xl leading-tight sm:text-4xl md:text-6xl">Pequenos detalhes.<br /><span className="text-primary">Seu jeito de brilhar.</span></h1>
       <p className="mx-auto mt-5 max-w-xl text-sm text-muted-foreground sm:text-base md:text-lg">Descubra nossa seleção de semijoias, bolsas, beleza e acessórios infantis.</p>

@@ -165,11 +165,13 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
 
       setMessage('Movimentação registrada com sucesso.');
       setShowNewModal(false);
+      setPeriodMode('daily');
+      setSelectedDate(formDate);
       setFormAmount('');
       setFormDescription('');
       setFormNotes('');
       setFormDate(new Date().toISOString().slice(0, 10));
-      await loadData();
+      if (startDate === formDate && endDate === formDate) await loadData();
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -542,7 +544,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
       {/* Modal: New Manual Transaction (Despesa / Retirada / Suprimento) */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl bg-card border border-border p-6 shadow-2xl space-y-5">
+          <div role="dialog" aria-modal="true" aria-label="Nova movimentação de caixa" className="max-h-[90dvh] overflow-y-auto w-full max-w-lg rounded-2xl bg-card border border-border p-6 shadow-2xl space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Plus size={20} className="text-primary" /> Nova Movimentação de Caixa
@@ -557,6 +559,7 @@ export default function CashFlowManager({ user }: CashFlowManagerProps) {
             </div>
 
             <form onSubmit={handleCreateTransaction} className="space-y-4">
+              {error && <p className="notice-error" role="alert">{error}</p>}
               {/* Type Switcher */}
               <div className="grid grid-cols-2 gap-2">
                 <button

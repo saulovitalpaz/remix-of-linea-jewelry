@@ -1,12 +1,12 @@
-const CACHE_NAME = 'chique-admin-pwa-v1';
+const CACHE_NAME = 'chique-admin-pwa-v2';
 const STATIC_ASSETS = [
   '/',
   '/admin',
   '/manifest.webmanifest',
   '/favicon.ico',
-  '/icons/pwa-192.png',
-  '/icons/pwa-512.png',
-  '/icons/apple-touch-icon.png'
+  '/icons/chique-full-192.png',
+  '/icons/chique-full-512.png',
+  '/icons/chique-full-apple-180.png'
 ];
 
 self.addEventListener('install', (event) => {

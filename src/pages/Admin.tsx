@@ -59,6 +59,7 @@ export default function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [tab, setTab] = useState('');
+  const [productSection, setProductSection] = useState<'products' | 'categories'>('products');
   const [draft, setDraft] = useState<Draft | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
@@ -139,7 +140,7 @@ export default function Admin() {
   }, [user]);
 
   useEffect(() => {
-    if (user && activeTab === 'sales') {
+    if (user && tab === 'sales') {
       loadSalesHistory();
     }
   }, [user, tab]);
@@ -221,7 +222,6 @@ export default function Admin() {
     { id: 'cashflow', label: 'Fluxo de Caixa', icon: CircleDollarSign },
     { id: 'sales', label: 'Registrar vendas', icon: Receipt },
     { id: 'products', label: 'Produtos e estoque', icon: Package },
-    { id: 'categories', label: 'Categorias', icon: Layers },
     { id: 'settings', label: 'Configurações', icon: SettingsIcon },
   ] : [
     { id: 'sales', label: 'Registrar vendas', icon: Receipt },
@@ -245,8 +245,8 @@ export default function Admin() {
     <div className="min-h-screen bg-muted/30 pb-12">
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
         <div className="store-container flex min-h-16 items-center justify-between gap-4 py-3">
-          <div className="min-w-0">
-            <p className="truncate text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Chique Detalhes</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <Link to="/" className="shrink-0"><img src="/Logo 1.png" alt="Chique Detalhes — início" width={64} height={56} className="h-14 w-16 object-contain" /></Link>
             <p className="truncate text-sm font-semibold">{user.name}</p>
           </div>
           <button className="button-secondary shrink-0 px-3 sm:px-4" onClick={logout}>
@@ -257,22 +257,22 @@ export default function Admin() {
       </header>
 
       <main id="main-content" className="store-container py-6 sm:py-10">
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 sm:mb-8">
+        {activeTab === 'dashboard' && user.role === 'ADMIN' && <div className="mb-6 flex flex-wrap items-start justify-between gap-4 sm:mb-8">
           <div>
             <p className="mb-2 text-sm text-muted-foreground">{ROLE_LABELS[user.role]}</p>
             <h1 className="text-2xl sm:text-3xl">Olá, {user.name}</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              {activeTab === 'sales' ? 'Registro de vendas da equipe e baixa de estoque.' : activeTab === 'cashflow' ? 'Controle financeiro de entradas, saídas, despesas e relatórios.' : activeTab === 'dashboard' ? 'Visão geral e atalhos de gerenciamento.' : activeTab === 'categories' ? 'Gerencie as categorias de produtos da loja.' : 'Acompanhe os produtos e as vendas da loja.'}
+              Visão geral do catálogo, estoque e vendas da loja.
             </p>
           </div>
-        </div>
+        </div>}
 
-        <nav aria-label="Seções do painel" className="mb-6 -mx-1 flex max-w-full gap-2 overflow-x-auto border-b border-border px-1 pb-3 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:pb-5">
+        <nav aria-label="Seções do painel" className="mb-6 grid grid-cols-2 gap-2 border-b border-border pb-3 sm:grid-cols-3 lg:flex lg:flex-wrap sm:mb-8 sm:pb-5">
           {navItems.map(item => (
             <button
               key={item.id}
               aria-current={activeTab === item.id ? 'page' : undefined}
-              className={(activeTab === item.id ? 'button-primary' : 'button-secondary') + ' shrink-0 whitespace-nowrap'}
+              className={(activeTab === item.id ? 'button-primary' : 'button-secondary') + ' min-w-0 min-h-11 px-3 text-xs sm:text-sm lg:flex-1'}
               onClick={() => {
                 if (draft && !window.confirm('Descartar as alterações do produto?')) return;
                 setDraft(null);
@@ -281,7 +281,7 @@ export default function Admin() {
                 setMessage('');
               }}
             >
-              <item.icon size={18} aria-hidden="true" />
+              <item.icon size={18} className="shrink-0" aria-hidden="true" />
               {item.label}
             </button>
           ))}
@@ -290,17 +290,30 @@ export default function Admin() {
         {error && <p className="notice-error mb-6" role="alert">{error}</p>}
         {message && <p className="notice-success mb-6" role="status">{message}</p>}
 
+        {activeTab === 'products' && user.role === 'ADMIN' && (
+          <nav aria-label="Produtos e estoque" className="mb-6 flex flex-wrap gap-2">
+            {(['products', 'categories'] as const).map(section => (
+              <button key={section} className={productSection === section ? 'button-primary' : 'button-secondary'}
+                aria-current={productSection === section ? 'page' : undefined}
+                onClick={() => {
+                  if (draft && !window.confirm('Descartar as alterações do produto?')) return;
+                  setDraft(null); setProductSection(section);
+                }}>
+                {section === 'products' ? <Package size={18} aria-hidden="true" /> : <Layers size={18} aria-hidden="true" />}
+                {section === 'products' ? 'Produtos' : 'Categorias'}
+              </button>
+            ))}
+          </nav>
+        )}
+
         {activeTab === 'dashboard' && user.role === 'ADMIN' ? (
           <AdminDashboard
-            user={user}
             products={products}
             categories={categories}
-            onNavigate={(targetTab) => { setDraft(null); setTab(targetTab); setError(''); setMessage(''); }}
-            onNewProduct={() => { setTab('products'); setDraft({ ...emptyDraft, categoryId: categories[0]?.id || '' }); setImage(null); setError(''); setMessage(''); }}
           />
         ) : activeTab === 'cashflow' && user.role === 'ADMIN' ? (
           <CashFlowManager user={user} />
-        ) : activeTab === 'categories' && user.role === 'ADMIN' ? (
+        ) : activeTab === 'products' && productSection === 'categories' && user.role === 'ADMIN' ? (
           <CategoryManager categories={categories} onRefresh={refresh} />
         ) : activeTab === 'settings' && user.role === 'ADMIN' ? (
           <Settings />

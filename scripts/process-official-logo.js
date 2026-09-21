@@ -123,77 +123,37 @@ function createPng(width, height, getPixel) {
   ]);
 }
 
-const inputPath = 'C:/Users/saulo/.gemini/antigravity/brain/140939a2-74d6-4b7c-b5b4-353482dfb1d7/media__1789958348842.png';
+const inputPath = path.join(process.cwd(), 'public', 'logo-completo.png');
 const src = decodePng(fs.readFileSync(inputPath));
-console.log('Decoded source image:', src.width, 'x', src.height);
+if (!src.pixels.some((value, index) => index % 4 === 3 && value === 0)) throw new Error('Logo must have a transparent background');
 
-function renderTarget(outW, outH, paddingRatio = 0.1, bgColor = [253, 251, 247, 255]) {
-  const availW = outW * (1 - 2 * paddingRatio);
-  const availH = outH * (1 - 2 * paddingRatio);
-  const scale = Math.min(availW / src.width, availH / src.height);
-
-  const drawW = src.width * scale;
-  const drawH = src.height * scale;
-  const offsetX = (outW - drawW) / 2;
-  const offsetY = (outH - drawH) / 2;
-
-  return createPng(outW, outH, (x, y) => {
-    if (x >= offsetX && x < offsetX + drawW && y >= offsetY && y < offsetY + drawH) {
-      const srcX = Math.min(src.width - 1, Math.max(0, Math.floor((x - offsetX) / scale)));
-      const srcY = Math.min(src.height - 1, Math.max(0, Math.floor((y - offsetY) / scale)));
-      const idx = (srcY * src.width + srcX) * 4;
-      const sr = src.pixels[idx];
-      const sg = src.pixels[idx + 1];
-      const sb = src.pixels[idx + 2];
-      const sa = src.pixels[idx + 3] / 255;
-
-      // If pixel is near pure white or transparent, blend gracefully
-      if (sr > 250 && sg > 250 && sb > 250) {
-        return bgColor;
-      }
-
-      const br = bgColor[0], bg = bgColor[1], bb = bgColor[2], ba = bgColor[3];
-      const r = sr * sa + br * (1 - sa);
-      const g = sg * sa + bg * (1 - sa);
-      const b = sb * sa + bb * (1 - sa);
-      const a = Math.max(sa * 255, ba);
-
-      return [r, g, b, a];
+function renderTarget(size, padding, background = [0, 0, 0, 0]) {
+  const scale = size * (1 - padding * 2) / Math.max(src.width, src.height);
+  const left = (size - src.width * scale) / 2;
+  const top = (size - src.height * scale) / 2;
+  return createPng(size, size, (x, y) => {
+    let alpha = 0;
+    const rgb = [0, 0, 0];
+    for (let sy = 0; sy < 4; sy++) for (let sx = 0; sx < 4; sx++) {
+      const ix = Math.floor((x + (sx + 0.5) / 4 - left) / scale);
+      const iy = Math.floor((y + (sy + 0.5) / 4 - top) / scale);
+      if (ix < 0 || iy < 0 || ix >= src.width || iy >= src.height) continue;
+      const index = (iy * src.width + ix) * 4;
+      const a = src.pixels[index + 3] / 255 / 16;
+      alpha += a;
+      for (let channel = 0; channel < 3; channel++) rgb[channel] += src.pixels[index + channel] * a;
     }
-    return bgColor;
+    const backgroundAlpha = background[3] / 255 * (1 - alpha);
+    const outputAlpha = alpha + backgroundAlpha;
+    return [...rgb.map((value, channel) => outputAlpha ? (value + background[channel] * backgroundAlpha) / outputAlpha : 0), outputAlpha * 255];
   });
 }
 
 const iconsDir = path.join(process.cwd(), 'public', 'icons');
-if (!fs.existsSync(iconsDir)) fs.mkdirSync(iconsDir, { recursive: true });
-
-// Dark Luxury Onyx (#141416) for PWA app icon background
-const darkBg = [20, 20, 22, 255];
-// Warm Off-White (#fdfbf7) for light background
-const lightBg = [253, 251, 247, 255];
-
-const pwa192 = renderTarget(192, 192, 0.12, darkBg);
-const pwa512 = renderTarget(512, 512, 0.12, darkBg);
-const pwaMaskable = renderTarget(512, 512, 0.20, darkBg);
-const appleIcon = renderTarget(180, 180, 0.12, darkBg);
-
-fs.writeFileSync(path.join(iconsDir, 'pwa-192.png'), pwa192);
-fs.writeFileSync(path.join(iconsDir, 'pwa-512.png'), pwa512);
-fs.writeFileSync(path.join(iconsDir, 'pwa-maskable-512.png'), pwaMaskable);
-fs.writeFileSync(path.join(iconsDir, 'apple-touch-icon.png'), appleIcon);
-
-// Copy to dist/icons as well if dist exists
-const distIconsDir = path.join(process.cwd(), 'dist', 'icons');
-const logo1Png = renderTarget(440, 240, 0.05, [0, 0, 0, 0]); // transparent background for header/login logo
-fs.writeFileSync(path.join(process.cwd(), 'public', 'Logo 1.png'), logo1Png);
-
-if (fs.existsSync(path.join(process.cwd(), 'dist'))) {
-  if (!fs.existsSync(distIconsDir)) fs.mkdirSync(distIconsDir, { recursive: true });
-  fs.writeFileSync(path.join(distIconsDir, 'pwa-192.png'), pwa192);
-  fs.writeFileSync(path.join(distIconsDir, 'pwa-512.png'), pwa512);
-  fs.writeFileSync(path.join(distIconsDir, 'pwa-maskable-512.png'), pwaMaskable);
-  fs.writeFileSync(path.join(distIconsDir, 'apple-touch-icon.png'), appleIcon);
-  fs.writeFileSync(path.join(process.cwd(), 'dist', 'Logo 1.png'), logo1Png);
+fs.mkdirSync(iconsDir, { recursive: true });
+for (const size of [192, 512]) {
+  fs.writeFileSync(path.join(iconsDir, `chique-full-${size}.png`), renderTarget(size, 0.05));
 }
-
-console.log('All PWA icons and official logos processed successfully!');
+fs.writeFileSync(path.join(iconsDir, 'chique-full-maskable-512.png'), renderTarget(512, 0.22, [253, 251, 247, 255]));
+fs.writeFileSync(path.join(iconsDir, 'chique-full-apple-180.png'), renderTarget(180, 0.08, [253, 251, 247, 255]));
+console.log('Full-logo icons generated; existing symbol preserved.');

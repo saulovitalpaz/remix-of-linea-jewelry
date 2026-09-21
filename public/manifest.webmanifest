@@ -13,25 +13,25 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/icons/pwa-192.png",
+      "src": "/icons/chique-full-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/pwa-512.png",
+      "src": "/icons/chique-full-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/pwa-maskable-512.png",
+      "src": "/icons/chique-full-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/apple-touch-icon.png",
+      "src": "/icons/chique-full-apple-180.png",
       "sizes": "180x180",
       "type": "image/png"
     }
@@ -42,7 +42,7 @@
       "short_name": "Vendas",
       "description": "Abrir o painel de registro de vendas",
       "url": "/admin",
-      "icons": [{ "src": "/icons/pwa-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/chique-full-192.png", "sizes": "192x192" }]
     }
   ],
   "categories": ["business", "shopping", "productivity"]
