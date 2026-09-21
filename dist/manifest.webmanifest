@@ -1,6 +1,6 @@
 {
-  "name": "Chique Detalhes Admin",
-  "short_name": "Chique Admin",
+  "name": "Chique Detalhes",
+  "short_name": "Chique Detalhes",
   "description": "Painel da equipe e gestão de vendas Chique Detalhes",
   "start_url": "/admin",
   "scope": "/",
