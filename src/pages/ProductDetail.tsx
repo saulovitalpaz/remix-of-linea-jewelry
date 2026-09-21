@@ -20,27 +20,28 @@ import {
 
 import { ProductService } from "../services/ProductService";
 
-const ProductDetail = () => {
-  const { id } = useParams();
+const ProductDetailContent = ({ id }: { id?: string }) => {
   const [product, setProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(id));
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    let live = true;
     if (id) {
       ProductService.getProductById(id).then(p => {
+        if (!live) return;
         setProduct(p || null);
         setIsLoading(false);
-      });
-    } else {
-      setIsLoading(false);
+      }).catch(() => { if (live) { setError('Não foi possível carregar o produto. Tente novamente.'); setProduct(null); setIsLoading(false); } });
     }
+    return () => { live = false; };
   }, [id]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <main id="main-content" className="min-h-screen bg-background flex items-center justify-center" role="status">
         <div className="animate-pulse text-muted-foreground">Carregando produto...</div>
-      </div>
+      </main>
     );
   }
 
@@ -48,8 +49,9 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="pt-20 text-center">
-          <h2 className="text-2xl font-light">Produto não encontrado</h2>
+        <main id="main-content" className="store-container py-20 text-center">
+          <h1 className="text-2xl">{error || 'Produto não encontrado'}</h1>
+          {error && <button className="button-secondary mt-4" onClick={() => window.location.reload()}>Tentar novamente</button>}
           <Link to="/" className="text-primary-gold mt-4 block">Voltar ao início</Link>
         </main>
         <Footer />
@@ -61,8 +63,8 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="pt-6 pb-36 md:pb-0">
-        <section className="w-full px-4 md:px-6">
+      <main id="main-content" className="store-container pt-8 pb-32 md:pb-12">
+        <section className="w-full">
           {/* Breadcrumb - Show above image on smaller screens */}
           <div className="lg:hidden mb-6">
             <Breadcrumb>
@@ -75,8 +77,8 @@ const ProductDetail = () => {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link to={`/category/${product.category.toLowerCase()}`}>
-                      {CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category}
+                    <Link to={`/category/${typeof product.category === 'object' ? product.category.slug : product.category.toLowerCase()}`}>
+                      {typeof product.category === 'object' ? product.category.name : (CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category)}
                     </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -89,11 +91,11 @@ const ProductDetail = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-            <ProductImageGallery imageUrl={product.imageUrl} />
+            <ProductImageGallery key={product.id} imageUrl={product.imageUrl} name={product.name} />
 
-            <div className="lg:pl-12 mt-8 lg:mt-0 lg:sticky lg:top-6 lg:h-fit">
-              <ProductInfo product={product} />
-              <ProductDescription description={product.description} />
+            <div className="lg:pl-12 mt-8 lg:mt-0 lg:sticky lg:top-28 lg:h-fit">
+              <ProductInfo key={product.id} product={product} />
+              <ProductDescription product={product} />
             </div>
           </div>
         </section>
@@ -111,4 +113,7 @@ const ProductDetail = () => {
   );
 };
 
-export default ProductDetail;
+export default function ProductDetail() {
+  const { id } = useParams();
+  return <ProductDetailContent key={id} id={id} />;
+}

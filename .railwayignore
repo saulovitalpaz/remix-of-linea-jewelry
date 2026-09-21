@@ -1,0 +1,20 @@
+# Frontend upload context. The backend is deployed separately.
+/backend/
+/app/
+/.next/
+/dist/
+/docs/
+/tests/
+/.agents/
+/.codex/
+/.git/
+/.railway/
+**/node_modules/
+**/.env
+**/.env.*
+**/*.pem
+**/*.log
+*.tsbuildinfo
+/next.config.ts
+/eslint.config.mjs
+/help_output.txt

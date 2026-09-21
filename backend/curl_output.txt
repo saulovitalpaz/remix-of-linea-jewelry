@@ -1,0 +1,65 @@
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0* Host backend-production-f06a.up.railway.app:443 was resolved.
+* IPv6: (none)
+* IPv4: 151.101.66.15
+*   Trying 151.101.66.15:443...
+* schannel: disabled automatic use of client certificate
+* ALPN: curl offers http/1.1
+* ALPN: server accepted http/1.1
+* Established connection to backend-production-f06a.up.railway.app (151.101.66.15 port 443) from 192.168.5.136 port 61761 
+* using HTTP/1.x
+> GET / HTTP/1.1
+
+> Host: backend-production-f06a.up.railway.app
+
+> User-Agent: curl/8.18.0
+
+> Accept: */*
+
+> 
+
+* Request completely sent off
+* schannel: remote party requests renegotiation
+* schannel: renegotiating SSL/TLS connection
+* schannel: SSL/TLS connection renegotiated
+< HTTP/1.1 502 Bad Gateway
+
+< Connection: keep-alive
+
+< Content-Length: 109
+
+< Content-Type: application/json
+
+< Server: railway-edge
+
+< X-Railway-Edge: railway/us-east4-eqdc4a
+
+< X-Railway-Fallback: true
+
+< X-Railway-Request-Id: ZFwpZ2MbS8O8LxHyc9o55Q
+
+< Accept-Ranges: bytes
+
+< Date: Mon, 02 Mar 2026 04:45:35 GMT
+
+< Via: 1.1 varnish
+
+< X-Cache: MISS
+
+< X-Cache-Hits: 0
+
+< X-Timer: S1772426735.165135,VS0,VE177
+
+< X-Railway-CDN-Edge: fastly/cache-gru-sbgr1930079-GRU
+
+< 
+
+{ [109 bytes data]
+
+100    109 100    109   0      0    380      0                              0
+100    109 100    109   0      0    380      0                              0
+100    109 100    109   0      0    380      0                              0
+* Connection #0 to host backend-production-f06a.up.railway.app:443 left intact
+{"status":"error","code":502,"message":"Application failed to respond","request_id":"ZFwpZ2MbS8O8LxHyc9o55Q"}

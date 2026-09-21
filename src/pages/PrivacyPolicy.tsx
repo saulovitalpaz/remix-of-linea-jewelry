@@ -11,7 +11,7 @@ const PrivacyPolicy = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="pt-6">
+      <main id="main-content" className="store-container pt-6">
         <div className="max-w-4xl mx-auto px-6 py-12">
           <header className="mb-12 text-center">
             <h1 className="text-4xl font-light text-foreground mb-4">Política de Privacidade</h1>

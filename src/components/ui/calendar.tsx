@@ -41,7 +41,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         day_hidden: "invisible",
         ...classNames,
       }}
-      {...(props as any)}
+      {...props}
     />
   );
 }

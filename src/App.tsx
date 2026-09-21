@@ -12,10 +12,11 @@ import SupportShipping from "./pages/SupportShipping";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import "./App.css";
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
     return (
-        <Routes>
+        <><a className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-primary p-3 text-primary-foreground focus:translate-y-0" href="#main-content">Pular para o conteúdo</a><Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/category/:category" element={<Category />} />
@@ -27,6 +28,6 @@ export default function App() {
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
-        </Routes>
+        </Routes><ScrollToTop /></>
     );
 }

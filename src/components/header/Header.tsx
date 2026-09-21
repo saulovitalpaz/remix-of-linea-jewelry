@@ -1,12 +1,14 @@
 import StatusBar from "./StatusBar";
 import Navigation from "./Navigation";
+import { useLocation } from 'react-router-dom';
 
 const Header = () => {
+  const location = useLocation();
   return (
-    <header className="w-full sticky top-0 z-50 pt-3 md:pt-5 px-3 md:px-6 transition-all duration-300 pointer-events-none">
+    <header className="w-full sticky top-0 z-40 pt-3 px-3 md:px-6 pointer-events-none">
       <div className="pointer-events-auto">
         {/* <StatusBar /> */}
-        <Navigation />
+        <Navigation key={location.pathname + location.search + location.hash} />
       </div>
     </header>
   );

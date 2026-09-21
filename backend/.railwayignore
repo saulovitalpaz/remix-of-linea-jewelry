@@ -1,0 +1,13 @@
+# Backend is an explicit upload root. Re-include its own source after parent
+# frontend exclusions, then remove local/generated/private files.
+!/**
+/node_modules/
+/dist/
+/tests/
+/.env
+/.env.*
+/.railway/
+/.git/
+/*.log
+/curl_output.txt
+*.tsbuildinfo

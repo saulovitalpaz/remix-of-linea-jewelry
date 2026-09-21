@@ -1,115 +1,28 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ProductService } from "../../services/ProductService";
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, Search, X, ArrowRight } from 'lucide-react';
+import { ProductService } from '@/services/ProductService';
+import type { CategoryModel } from '@/types/product';
 
-const Navigation = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+export default function Navigation() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [query, setQuery] = useState('');
+  const [categories, setCategories] = useState<CategoryModel[]>([]);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const searchButton = useRef<HTMLButtonElement>(null);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    ProductService.getCategories().then(setCategories);
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/category/all?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchOpen(false);
-      setSearchQuery("");
-    }
-  };
-
-  return (
-    <nav className="w-full max-w-screen-xl mx-auto bg-white/40 backdrop-blur-md shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 rounded-2xl md:rounded-[2rem] transition-all duration-300">
-      <div className="px-4 md:px-8 h-16 md:h-20 flex items-center justify-between gap-2 md:gap-4">
-
-        {/* Left — Logo 2 Symbol & Desktop Nav */}
-        <div className="flex items-center gap-3 md:gap-6 shrink-0">
-          <Link to="/" className="flex items-center shrink-0">
-            <img
-              src="/Logo 2.png"
-              alt="Chique Detalhes"
-              className="h-10 md:h-14 w-auto object-contain"
-            />
-          </Link>
-          <nav className="hidden md:flex items-center gap-5 lg:gap-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/category/${cat.slug}`}
-                className="group relative text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap duration-300"
-              >
-                {cat.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-[#C5A028] to-[#E6C878] transition-all duration-300 group-hover:w-full rounded-full"></span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        {/* Right — Icons */}
-        <div className="flex items-center gap-2 md:gap-3">
-          {/* Search toggle */}
-          {searchOpen ? (
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
-              <input
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar produtos..."
-                className="text-base border-b border-gray-300 outline-none px-2 py-1 w-36 sm:w-48 lg:w-64 focus:border-[#C5A028] transition-colors bg-transparent text-gray-800 placeholder:text-gray-400"
-              />
-              <button type="button" onClick={() => setSearchOpen(false)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">&times;</button>
-            </form>
-          ) : (
-            <button onClick={() => setSearchOpen(true)} className="p-2 text-gray-500 hover:text-yellow-700 transition-colors" aria-label="Buscar">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-              </svg>
-            </button>
-          )}
-
-
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden p-2 text-gray-700"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Menu"
-          >
-            {mobileMenuOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white/80 backdrop-blur-xl border-t border-white/40 px-6 py-5 space-y-1 rounded-b-2xl md:rounded-b-[2rem]">
-          {categories.map((cat) => (
-            <Link
-              key={cat.id}
-              to={`/category/${cat.slug}`}
-              className="block text-lg font-medium text-gray-800 hover:text-[#C5A028] transition-colors py-4 border-b border-gray-100/50"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {cat.name}
-            </Link>
-          ))}
-
-        </div>
-      )}
-    </nav>
-  );
-};
-
-export default Navigation;
+  const location = useLocation();
+  useEffect(() => { let live = true; ProductService.getCategories().then(data => { if (live) setCategories(data); }).catch(() => {}); return () => { live = false; }; }, []);
+  useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
+  return <nav aria-label="Navegação principal" className="mx-auto max-w-screen-xl rounded-2xl border border-border bg-background/95 shadow-sm backdrop-blur-md" onKeyDown={e => { if (e.key === 'Escape') { if (searchOpen) searchButton.current?.focus(); else menuButton.current?.focus(); setSearchOpen(false); setMenuOpen(false); } }}>
+    <div className="flex h-20 items-center justify-between gap-4 px-4 md:px-6">
+      <Link to="/" className="shrink-0"><img src="/Logo 2.png" alt="Chique Detalhes — início" width={64} height={56} className="h-14 w-16 object-contain" /></Link>
+      <div className="hidden min-w-0 items-center gap-5 xl:flex"><Link className="nav-link" to="/category/all">Todos os produtos</Link>{categories.map(category => <Link className="nav-link" key={category.id} to={'/category/' + category.slug}>{category.name}</Link>)}</div>
+      <div className="flex items-center gap-1"><button ref={searchButton} className="icon-button" aria-label="Buscar produtos" aria-expanded={searchOpen} aria-controls="site-search" onClick={() => { setSearchOpen(!searchOpen); setMenuOpen(false); }}><Search size={21} aria-hidden="true" /></button><button ref={menuButton} className="icon-button xl:hidden" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => { setMenuOpen(!menuOpen); setSearchOpen(false); }}>{menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}</button></div>
+    </div>
+    {searchOpen && <form id="site-search" role="search" className="flex gap-3 border-t border-border p-4 animate-fade-in" onSubmit={e => { e.preventDefault(); if (query.trim()) navigate('/category/all?q=' + encodeURIComponent(query.trim())); }}><label className="min-w-0 flex-1"><span className="sr-only">Buscar produtos</span><input ref={searchInput} className="field" type="search" name="q" value={query} onChange={e => setQuery(e.target.value)} placeholder="O que você procura?" /></label><button className="button-primary" aria-label="Pesquisar"><ArrowRight size={20} aria-hidden="true" /></button></form>}
+    {menuOpen && <div id="site-menu" className="max-h-[65dvh] overflow-y-auto overscroll-contain border-t border-border p-4 animate-fade-in xl:hidden"><Link className="mobile-nav-link" to="/category/all">Todos os produtos</Link>{categories.map(category => <Link className="mobile-nav-link" key={category.id} to={'/category/' + category.slug}>{category.name}</Link>)}<Link className="mobile-nav-link" to="/#nossa-loja">Visite nossa loja</Link></div>}
+  </nav>;
+}

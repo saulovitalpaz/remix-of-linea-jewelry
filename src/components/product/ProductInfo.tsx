@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Minus, Plus } from "lucide-react";
 import { Product, CATEGORIES } from "../../types/product";
+import { formatCurrency } from '@/lib/format';
 
 interface ProductInfoProps {
   product: Product;
@@ -19,12 +20,13 @@ interface ProductInfoProps {
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
 
-  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const incrementQuantity = () => setQuantity(prev => Math.min(product.stock, prev + 1));
   const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
 
   const buyViaWhatsApp = () => {
-    const message = encodeURIComponent(`Olá! Gostaria de encomendar ${quantity}x ${product.name} (R$ ${product.price.toFixed(2)} cada). Total: R$ ${(product.price * quantity).toFixed(2)}.`);
-    window.open(`https://wa.me/5577988590306?text=${message}`, '_blank');
+    if (product.stock < 1 || quantity > product.stock) return;
+    const message = encodeURIComponent(`Olá! Gostaria de encomendar ${quantity}x ${product.name} (${formatCurrency(product.price)} cada). Total: ${formatCurrency(product.price * quantity)}. ${window.location.href}`);
+    window.open(`https://wa.me/5577988590306?text=${message}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -41,7 +43,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to={`/category/${product.category.toLowerCase()}`}>{CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category}</Link>
+                <Link to={`/category/${typeof product.category === 'object' ? product.category.slug : product.category.toLowerCase()}`}>
+                  {typeof product.category === 'object' ? product.category.name : (CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category)}
+                </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -54,13 +58,15 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
       {/* Product title and price */}
       <div className="space-y-2">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-4">
           <div>
-            <p className="text-sm font-light text-muted-foreground mb-1">{CATEGORIES[product.category as keyof typeof CATEGORIES]}</p>
+            <p className="text-sm font-light text-muted-foreground mb-1">
+              {typeof product.category === 'object' ? product.category.name : (CATEGORIES[product.category as keyof typeof CATEGORIES] || product.category)}
+            </p>
             <h1 className="text-2xl md:text-4xl font-bold text-foreground">{product.name}</h1>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-primary-gold">R$ {product.price.toFixed(2)}</p>
+          <div>
+            <p className="text-2xl font-bold text-primary">{formatCurrency(product.price)}</p>
           </div>
         </div>
       </div>
@@ -76,7 +82,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
               variant="ghost"
               size="sm"
               onClick={decrementQuantity}
-              className="h-10 w-10 p-0 hover:bg-transparent hover:opacity-50 rounded-none border-none"
+              aria-label="Diminuir quantidade"
+              disabled={quantity <= 1 || product.stock === 0}
+              className="h-11 w-11 p-0 hover:bg-transparent hover:opacity-50 rounded-none border-none"
             >
               <Minus className="h-4 w-4" />
             </Button>
@@ -87,7 +95,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
               variant="ghost"
               size="sm"
               onClick={incrementQuantity}
-              className="h-10 w-10 p-0 hover:bg-transparent hover:opacity-50 rounded-none border-none"
+              aria-label="Aumentar quantidade"
+              disabled={quantity >= product.stock}
+              className="h-11 w-11 p-0 hover:bg-transparent hover:opacity-50 rounded-none border-none"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -97,18 +107,14 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         <div className="fixed bottom-0 left-0 w-full p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 transition-all md:static md:p-0 md:bg-transparent md:border-none md:shadow-none md:z-auto flex flex-col gap-3">
           <Button
             onClick={buyViaWhatsApp}
-            className="w-full h-14 bg-[#25D366] text-white hover:bg-[#20bd5a] font-bold rounded-2xl flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all"
+            disabled={product.stock === 0}
+            className="w-full h-14 bg-[#16763b] text-white hover:bg-[#105c2d] font-bold rounded-2xl flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-            Comprar pelo WhatsApp
+            {product.stock > 0 ? 'Comprar pelo WhatsApp' : 'Produto esgotado'}
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full h-12 md:h-14 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-bold rounded-2xl md:rounded-xl transition-all"
-          >
-            Adicionar à sacola
-          </Button>
+          <p className="text-center text-xs text-muted-foreground">Confirme disponibilidade e entrega com nossa equipe.</p>
         </div>
       </div>
 
