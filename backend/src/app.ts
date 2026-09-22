@@ -11,6 +11,30 @@ import { isProductImageKey } from './utils/object-storage.js';
 
 interface Dependencies { prisma: PrismaClient; jwtSecret: string; uploadImage: (buffer: Buffer, contentType?: string) => Promise<string>; readImage?: (key: string) => Promise<{ body: Buffer; contentType: string }> }
 const safeUser = (user: { id: string; name: string; role: string }) => ({ id: user.id, name: user.name, role: user.role });
+const publicProduct = <T extends Record<string, unknown>>(product: T) => {
+  const { onOffer: _privateOffer, ...safe } = product;
+  return safe;
+};
+const optionalBoolean = (value: unknown, field: string) => {
+  if (value === undefined) return undefined;
+  if (value === true || value === 'true') return true;
+  if (value === false || value === 'false') return false;
+  throw new HttpError(400, `${field} inválido.`);
+};
+const monthPattern = /^(\d{4})-(0[1-9]|1[0-2])$/;
+function monthBounds(month: unknown) {
+  if (typeof month !== 'string' || !monthPattern.test(month)) throw new HttpError(400, 'Mês inválido. Use AAAA-MM.');
+  const [, yearText, monthText] = monthPattern.exec(month)!;
+  const year = Number(yearText); const monthIndex = Number(monthText) - 1;
+  // São Paulo has used UTC-03:00 since 2019; supported goal months are current/future business data.
+  return { month, start: new Date(Date.UTC(year, monthIndex, 1, 3)), end: new Date(Date.UTC(year, monthIndex + 1, 1, 3)) };
+}
+function saoPauloTodayBounds(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find(part => part.type === type)?.value);
+  const year = value('year'); const monthIndex = value('month') - 1; const day = value('day');
+  return { start: new Date(Date.UTC(year, monthIndex, day, 3)), end: new Date(Date.UTC(year, monthIndex, day + 1, 3)) };
+}
 
 export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Dependencies) {
   if (jwtSecret.length < 32) throw new Error('JWT_SECRET precisa ter ao menos 32 caracteres.');
@@ -96,6 +120,21 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
     const passwordHash = await bcrypt.hash(password, 12);
     res.status(201).json(safeUser(await prisma.adminUser.create({ data: { name, username, role, passwordHash } })));
   });
+  app.delete('/api/users/:id', ...admin, async (req, res) => {
+    const id = String(req.params.id);
+    if (id === res.locals.user.id) throw new HttpError(400, 'Você não pode excluir a própria conta.');
+    await prisma.$transaction(async tx => {
+      const requester = await tx.adminUser.findUnique({ where: { id: res.locals.user.id } });
+      if (!requester || requester.role !== 'ADMIN') throw new HttpError(401, 'Sessão inválida.');
+      const target = await tx.adminUser.findUnique({ where: { id } });
+      if (!target) throw new HttpError(404, 'Usuário não encontrado.');
+      if (target.role === 'ADMIN' && await tx.adminUser.count({ where: { role: 'ADMIN' } }) <= 1) {
+        throw new HttpError(400, 'Não é possível excluir o último administrador.');
+      }
+      await tx.adminUser.delete({ where: { id } });
+    }, { isolationLevel: 'Serializable' });
+    res.status(204).end();
+  });
   app.get('/api/categories', async (_req, res) => res.json(await prisma.category.findMany({ include: { _count: { select: { products: true } } }, orderBy: { name: 'asc' } })));
   app.post('/api/categories', ...manage, upload.single('image'), async (req, res) => {
     const name = text(req.body?.name, 'Nome');
@@ -126,14 +165,18 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
   app.get('/api/products', async (req, res) => {
     const slug = req.query.categorySlug;
     if (slug !== undefined && typeof slug !== 'string') throw new HttpError(400, 'Categoria inválida.');
-    res.json(await prisma.product.findMany({ where: slug ? { category: { slug } } : {}, include: { category: true }, orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }] }));
+    const products = await prisma.product.findMany({ where: slug ? { category: { slug } } : {}, include: { category: true }, orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }] });
+    res.json(products.map(product => publicProduct(product as unknown as Record<string, unknown>)));
   });
   app.get('/api/products/:id', async (req, res) => {
     const product = await prisma.product.findUnique({ where: { id: String(req.params.id) }, include: { category: true } });
     if (!product) throw new HttpError(404, 'Produto não encontrado.');
-    res.json(product);
+    res.json(publicProduct(product as unknown as Record<string, unknown>));
   });
-  async function productData(body: Record<string, unknown>) {
+  app.get('/api/admin/products', authenticate, permit(...roles), async (_req, res) => {
+    res.json(await prisma.product.findMany({ include: { category: true }, orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }] }));
+  });
+  async function productData(body: Record<string, unknown>, existing?: { featured: boolean; onOffer: boolean }) {
     const name = text(body.name, 'Nome');
     const price = number(body.price, 'Preço');
     if (price <= 0 || Math.abs(price * 100 - Math.round(price * 100)) > 0.00001) throw new HttpError(400, 'Informe um preço positivo com até duas casas decimais.');
@@ -142,17 +185,22 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
     const category = await prisma.category.findFirst({ where: { OR: [{ id: categoryId }, { slug: categoryId }] } });
     if (!category) throw new HttpError(400, 'Categoria não encontrada.');
     const description = body.description ? text(body.description, 'Descrição', 5000) : '';
-    const featured = Boolean(body.featured);
-    return { name, price, stock, categoryId: category.id, description, featured };
+    const featured = optionalBoolean(body.featured, 'Destaque') ?? existing?.featured ?? false;
+    const onOffer = optionalBoolean(body.onOffer, 'Oferta') ?? existing?.onOffer ?? false;
+    return { name, price, stock, categoryId: category.id, description, featured, onOffer };
   }
   app.post('/api/products', ...manage, upload.single('image'), async (req, res) => {
+    if (req.body?.onOffer !== undefined && res.locals.user.role !== 'ADMIN') throw new HttpError(403, 'Apenas administradores podem alterar ofertas.');
     const data = await productData(req.body || {});
     const customUrl = typeof req.body?.imageUrl === 'string' && req.body.imageUrl.trim() ? req.body.imageUrl.trim() : null;
     const image = req.file ? await imageUrl(req.file) : customUrl;
     res.status(201).json(await prisma.product.create({ data: { ...data, imageUrl: image }, include: { category: true } }));
   });
   app.put('/api/products/:id', ...manage, upload.single('image'), async (req, res) => {
-    const data = await productData(req.body || {});
+    if (req.body?.onOffer !== undefined && res.locals.user.role !== 'ADMIN') throw new HttpError(403, 'Apenas administradores podem alterar ofertas.');
+    const existing = await prisma.product.findUnique({ where: { id: String(req.params.id) } });
+    if (!existing) throw new HttpError(404, 'Produto não encontrado.');
+    const data = await productData(req.body || {}, existing);
     const customUrl = typeof req.body?.imageUrl === 'string' && req.body.imageUrl.trim() ? req.body.imageUrl.trim() : undefined;
     const image = req.file ? { imageUrl: await imageUrl(req.file) } : (customUrl !== undefined ? { imageUrl: customUrl } : {});
     res.json(await prisma.product.update({ where: { id: String(req.params.id) }, data: { ...data, ...image }, include: { category: true } }));
@@ -225,15 +273,14 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
   });
   app.get('/api/sales/history', authenticate, permit(...roles), async (req, res) => {
     const user = res.locals.user;
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const { start: startOfToday, end: endOfToday } = saoPauloTodayBounds();
 
     const todaySales = await prisma.dailySales.findMany({
       where: {
+        userId: user.id,
         date: {
           gte: startOfToday,
-          lte: endOfToday,
+          lt: endOfToday,
         }
       },
       orderBy: { createdAt: 'desc' },
@@ -282,6 +329,32 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
     });
 
     res.json({ todaySummary, userRecentSales: formattedRecent });
+  });
+  async function goalResponse(userId: string, rawMonth: unknown) {
+    const { month, start, end } = monthBounds(rawMonth);
+    const [goal, sales] = await Promise.all([
+      prisma.monthlySalesGoal.findUnique({ where: { userId_month: { userId, month } } }),
+      prisma.dailySales.findMany({ where: { userId, date: { gte: start, lt: end } }, select: { totalRevenue: true } }),
+    ]);
+    const cents = sales.reduce((total, sale) => total + Math.round(sale.totalRevenue * 100), 0);
+    return { month, target: goal?.target ?? null, totalRevenue: cents / 100 };
+  }
+  app.get('/api/sales/goal', authenticate, permit(...roles), async (req, res) => {
+    res.json(await goalResponse(res.locals.user.id, req.query.month));
+  });
+  app.put('/api/sales/goal', authenticate, permit(...roles), async (req, res) => {
+    const { month } = monthBounds(req.body?.month);
+    const target = number(req.body?.target, 'Meta');
+    if (target <= 0 || target > 1_000_000 || Math.abs(target * 100 - Math.round(target * 100)) > 0.00001) {
+      throw new HttpError(400, 'Informe uma meta positiva de até R$ 1.000.000,00 com duas casas decimais.');
+    }
+    const userId = res.locals.user.id;
+    await prisma.monthlySalesGoal.upsert({
+      where: { userId_month: { userId, month } },
+      create: { userId, month, target },
+      update: { target },
+    });
+    res.json(await goalResponse(userId, month));
   });
   app.get('/api/cash-flow', ...manage, async (req, res) => {
     const { startDate, endDate, type, category } = req.query;

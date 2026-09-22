@@ -16,6 +16,7 @@ model AdminUser {
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  monthlyGoals MonthlySalesGoal[]
 }
 
 model Category {
@@ -39,10 +40,24 @@ model Product {
   stock       Int      @default(0)
   salesCount  Int      @default(0)
   featured    Boolean  @default(false)
+  onOffer     Boolean  @default(false)
   category    Category @relation(fields: [categoryId], references: [id])
   categoryId  String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model MonthlySalesGoal {
+  id        String    @id @default(uuid())
+  userId    String
+  month     String
+  target    Float
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, month])
+  @@index([userId])
 }
 
 model DailySales {

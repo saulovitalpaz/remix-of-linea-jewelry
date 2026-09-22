@@ -133,11 +133,11 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
   };
 
   return (
-    <section className="space-y-6" aria-label="Gerenciador de Categorias">
+    <section className="space-y-6" aria-labelledby="category-manager-title">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h3 className="text-xl font-semibold flex items-center gap-2">
-            <Layers size={20} className="text-primary" />
+          <h3 id="category-manager-title" className="text-xl font-semibold flex items-center gap-2">
+            <Layers size={20} className="text-primary" aria-hidden="true" />
             Categorias & Ilustrações
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
@@ -145,7 +145,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
           </p>
         </div>
         {editingId && (
-          <button onClick={resetForm} className="button-secondary text-xs">
+          <button type="button" onClick={resetForm} className="button-secondary text-sm">
             + Nova Categoria
           </button>
         )}
@@ -157,7 +157,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Form Column */}
         <div className="lg:col-span-5">
-          <form className="admin-panel space-y-4" onSubmit={handleSubmit}>
+          <form className="admin-panel space-y-4" onSubmit={handleSubmit} aria-busy={busy}>
             <h4 className="text-base font-semibold">
               {editingId ? 'Editar Categoria' : 'Adicionar Nova Categoria'}
             </h4>
@@ -166,29 +166,34 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
               <label htmlFor="category-name" className="block text-xs font-medium mb-1">Nome da Categoria</label>
               <input id="category-name"
                 className="field"
+                name="category-name"
+                autoComplete="off"
                 required
                 maxLength={80}
                 value={name}
                 onChange={e => handleNameChange(e.target.value)}
-                placeholder="Ex: Anéis & Brincos"
+                placeholder="Ex.: Anéis & Brincos…"
               />
             </div>
 
             <div>
               <label htmlFor="category-slug" className="block text-xs font-medium mb-1">Identificador da URL (slug)</label>
               <input id="category-slug"
-                className="field text-xs font-mono"
+                className="field font-mono"
+                name="category-slug"
+                autoComplete="off"
+                spellCheck={false}
                 required
                 maxLength={80}
                 value={slug}
                 onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                placeholder="ex: aneis-brincos"
+                placeholder="Ex.: aneis-brincos…"
               />
             </div>
 
             <div>
               <label htmlFor="category-image" className="block text-sm font-medium mb-2">Imagem da categoria</label>
-              <input ref={imageInput} id="category-image" type="file" accept="image/png,image/webp" className="field text-xs" disabled={busy} onChange={event => {
+              <input ref={imageInput} id="category-image" name="category-image" type="file" accept="image/png,image/webp" className="field text-sm" disabled={busy} onChange={event => {
                 const file = event.target.files?.[0];
                 if (!file) return;
                 if (!['image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
@@ -201,7 +206,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
                 <CategoryIllustration imageUrl={preview || savedImage} className="h-16 w-16" />
                 <button type="button" className="button-secondary text-xs" onClick={() => { selectImage(null); setRemoveImage(true); }}>Usar emoji</button>
               </div>}
-              <p id="illustration-label" className="block text-sm font-medium my-2">Ou escolha um dos 5 emojis</p>
+              <p id="illustration-label" className="block text-sm font-medium my-2">Ou escolha uma das 5 ilustrações</p>
               <div className="flex flex-wrap gap-2 mb-2" role="group" aria-labelledby="illustration-label">
                 {categoryEmojiOptions(slug).map(preset => (
                   <button
@@ -211,7 +216,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
                     aria-label={preset.label}
                     aria-pressed={emoji === preset.emoji && !(image || (savedImage && !removeImage))}
                     title={preset.label}
-                    className={`h-12 w-12 rounded-lg border flex items-center justify-center transition-colors ${
+                    className={`h-12 w-12 rounded-lg border flex items-center justify-center transition-[color,background-color,border-color,box-shadow] ${
                       emoji === preset.emoji && !(image || (savedImage && !removeImage)) ? 'border-primary bg-primary/10 shadow-sm' : 'border-border bg-card hover:bg-muted'
                     }`}
                   >
@@ -225,16 +230,18 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
             <div>
               <label htmlFor="category-description" className="block text-xs font-medium mb-1">Descrição</label>
               <textarea id="category-description"
-                className="field min-h-20 text-xs"
+                className="field min-h-20"
+                name="category-description"
+                autoComplete="off"
                 maxLength={500}
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                placeholder="Pequena descrição da coleção exibida na homepage..."
+                placeholder="Pequena descrição da coleção exibida na homepage…"
               />
             </div>
 
             <div className="flex gap-2 pt-2">
-              <button className="button-primary w-full text-xs" disabled={busy}>
+              <button className="button-primary w-full" disabled={busy}>
                 {busy ? 'Salvando…' : editingId ? 'Salvar Alterações' : 'Criar Categoria'}
               </button>
               {editingId && (
@@ -278,7 +285,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
                         title="Editar categoria"
                         aria-label={`Editar ${cat.name}`}
                       >
-                        <Pencil size={16} />
+                        <Pencil size={16} aria-hidden="true" />
                       </button>
                       <button
                         onClick={() => handleDelete(cat)}
@@ -287,7 +294,7 @@ export default function CategoryManager({ categories, onRefresh }: CategoryManag
                         className={`icon-button ${canDelete ? 'text-destructive hover:bg-destructive/10' : 'text-muted-foreground opacity-40 cursor-not-allowed'}`}
                         title={canDelete ? 'Excluir categoria' : 'Não é possível excluir: possui produtos vinculados'}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={16} aria-hidden="true" />
                       </button>
                     </div>
                   </li>

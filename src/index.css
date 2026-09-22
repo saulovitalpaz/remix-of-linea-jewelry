@@ -18,8 +18,8 @@
     --gold-gradient: linear-gradient(135deg, #806315, #9a7821);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: 'Montserrat', sans-serif; color: hsl(var(--foreground)); background: hsl(var(--background)); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; font-weight: 600; line-height: 1.2; text-wrap: balance; overflow-wrap: anywhere; }
+  body { margin: 0; font-family: 'Montserrat', sans-serif; font-size: 1rem; color: hsl(var(--foreground)); background: hsl(var(--background)); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; font-weight: 600; line-height: 1.2; letter-spacing: -.012em; text-wrap: balance; overflow-wrap: anywhere; }
   a { text-decoration: none; }
   button, input, select, textarea { font: inherit; }
   button, a, summary { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -28,6 +28,7 @@
   [id] { scroll-margin-top: 7rem; }
   select { color: hsl(var(--foreground)); background: hsl(var(--card)); }
 }
+.brand-script { font-family: 'Great Vibes', 'Segoe Script', cursive; font-weight: 400; letter-spacing: .01em; }
 
 @layer components {
   .store-container { @apply mx-auto w-full max-w-screen-xl px-4 sm:px-6 lg:px-8; }

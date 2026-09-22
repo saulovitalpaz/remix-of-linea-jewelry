@@ -9,7 +9,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "db:sync": "prisma db push",
-    "db:upgrade": "prisma db execute --file prisma/upgrades/20260920_users.sql --schema prisma/schema.prisma && prisma db execute --file prisma/upgrades/20260921_cash_flow.sql --schema prisma/schema.prisma",
+    "db:upgrade": "prisma db execute --file prisma/upgrades/20260920_users.sql --schema prisma/schema.prisma && prisma db execute --file prisma/upgrades/20260921_cash_flow.sql --schema prisma/schema.prisma && prisma db execute --file prisma/upgrades/20260921_sales_portal.sql --schema prisma/schema.prisma",
     "test": "node --import tsx --test tests/*.test.ts",
     "dev": "tsx src/index.ts",
     "postinstall": "npx prisma generate"

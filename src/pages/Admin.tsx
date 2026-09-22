@@ -6,6 +6,9 @@ import Settings from '@/components/admin/Settings';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import CategoryManager from '@/components/admin/CategoryManager';
 import CashFlowManager from '@/components/admin/CashFlowManager';
+import ProductReference from '@/components/admin/ProductReference';
+import SellerGoalCard from '@/components/admin/SellerGoalCard';
+import { filterTeamProducts, salesDay } from '@/lib/sales-portal';
 import type { Product, CategoryModel } from '@/types/product';
 import type { AdminUser } from '@/types/admin';
 import { ROLE_LABELS } from '@/types/admin';
@@ -23,6 +26,7 @@ interface Draft {
   description: string;
   imageUrl?: string;
   featured?: boolean;
+  onOffer?: boolean;
 }
 
 interface CustomSaleItem {
@@ -68,7 +72,15 @@ export default function Admin() {
   const tab = searchParams.get('tab') || '';
   const setTab = (value: string) => setSearchParams(value ? { tab: value } : {});
   const stockFilter = ['out', 'available'].includes(searchParams.get('stock') || '') ? searchParams.get('stock')! : 'all';
-  const displayedProducts = products.filter(product => tab !== 'products' || stockFilter === 'all' || (stockFilter === 'out' ? product.stock === 0 : product.stock > 0));
+  const selectionFilter = searchParams.get('selection') || 'all';
+  const query = searchParams.get('q') || '';
+  const referenceId = searchParams.get('product');
+  const updateFilters = (values: Record<string, string>) => setSearchParams(previous => {
+    const next = new URLSearchParams(previous);
+    for (const [key, value] of Object.entries(values)) { if (value && value !== 'all') next.set(key, value); else next.delete(key); }
+    return next;
+  }, { replace: true });
+  const displayedProducts = filterTeamProducts(products, { query, stock: stockFilter, selection: selectionFilter });
   const productSection = searchParams.get('section') === 'categories' ? 'categories' : 'products';
   const setProductSection = (section: 'products' | 'categories') => setSearchParams({ tab: 'products', section });
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -77,7 +89,7 @@ export default function Admin() {
   const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [sales, setSales] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState('');
-  const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [saleDate, setSaleDate] = useState(() => salesDay());
   const [salePaymentMethod, setSalePaymentMethod] = useState('PIX');
   const [customItems, setCustomItems] = useState<CustomSaleItem[]>([]);
   const [newCustomDesc, setNewCustomDesc] = useState('');
@@ -85,6 +97,7 @@ export default function Admin() {
   const [newCustomQty, setNewCustomQty] = useState(1);
   const [showAddCustom, setShowAddCustom] = useState(false);
   const [salesHistory, setSalesHistory] = useState<SalesHistoryData | null>(null);
+  const [salesRevision, setSalesRevision] = useState(0);
   const [showRecentSales, setShowRecentSales] = useState(true);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -129,7 +142,7 @@ export default function Admin() {
     setDraft(null);
     setSales({});
     setNotes('');
-    setSaleDate(new Date().toISOString().slice(0, 10));
+    setSaleDate(salesDay());
     setSalePaymentMethod('PIX');
     setCustomItems([]);
     setSalesHistory(null);
@@ -150,17 +163,19 @@ export default function Admin() {
     try {
       const res = await api<SalesHistoryData>('/sales/history', {}, true);
       setSalesHistory(res);
-    } catch {
-      // ignore
+    } catch (error) {
+      setSalesHistory(null);
+      setError(errorMessage(error));
     }
   }
 
   async function refresh() {
     setLoading(true);
     try {
-      const [items, groups] = await Promise.all([ProductService.getProducts(), ProductService.getCategories(), loadSalesHistory()]);
+      const [items, groups] = await Promise.all([ProductService.getTeamProducts(), ProductService.getCategories(), loadSalesHistory()]);
       setProducts(items);
       setCategories(groups);
+      setSalesRevision(value => value + 1);
     } finally {
       setLoading(false);
     }
@@ -169,7 +184,7 @@ export default function Admin() {
   useEffect(() => {
     let live = true;
     if (user) {
-      Promise.all([ProductService.getProducts(), ProductService.getCategories(), api<SalesHistoryData>('/sales/history', {}, true).catch(() => null)])
+      Promise.all([ProductService.getTeamProducts(), ProductService.getCategories(), api<SalesHistoryData>('/sales/history', {}, true).catch(e => { if (live) setError(errorMessage(e)); return null; })])
         .then(([items, groups, history]) => { if (live) { setProducts(items); setCategories(groups); setSalesHistory(history); } })
         .catch(e => { if (live) setError(errorMessage(e)); })
         .finally(() => { if (live) setLoading(false); });
@@ -180,7 +195,7 @@ export default function Admin() {
   useEffect(() => {
     let live = true;
     if (user && tab === 'sales') {
-      api<SalesHistoryData>('/sales/history', {}, true).then(data => { if (live) setSalesHistory(data); }).catch(() => {});
+      api<SalesHistoryData>('/sales/history', {}, true).then(data => { if (live) setSalesHistory(data); }).catch(e => { if (live) { setSalesHistory(null); setError(errorMessage(e)); } });
     }
     return () => { live = false; };
   }, [user, tab]);
@@ -216,6 +231,8 @@ export default function Admin() {
     run(async () => {
       const body = new FormData();
       for (const key of ['name', 'price', 'stock', 'categoryId', 'description'] as const) body.append(key, draft[key]);
+      body.append('featured', String(Boolean(draft.featured)));
+      if (user?.role === 'ADMIN') body.append('onOffer', String(Boolean(draft.onOffer)));
       if (draft.imageUrl) body.append('imageUrl', draft.imageUrl);
       if (image) { if (image.size > 5 * 1024 * 1024) throw new Error('A imagem deve ter no máximo 5 MB.'); body.append('image', image); }
       await ProductService.saveProduct(body, draft.id);
@@ -366,18 +383,19 @@ export default function Admin() {
         {activeTab === 'dashboard' && user.role === 'ADMIN' ? (
           <AdminDashboard
             products={products}
+            onAddProduct={() => { setDraft({ ...emptyDraft, categoryId: categories[0]?.id || '' }); setImage(null); setTab('products'); }}
           />
         ) : activeTab === 'cashflow' && user.role === 'ADMIN' ? (
           <CashFlowManager user={user} />
         ) : activeTab === 'products' && productSection === 'categories' && user.role === 'ADMIN' ? (
           <CategoryManager categories={categories} onRefresh={refresh} />
         ) : activeTab === 'settings' && user.role === 'ADMIN' ? (
-          <Settings />
+          <Settings currentUserId={user.id} />
         ) : (
 
           <>
             {/* Stat cards rendered ONLY for products tab */}
-            {activeTab === 'products' && (
+            {activeTab === 'products' && user.role !== 'SELLER' && (
               <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="admin-stat"><span>Produtos cadastrados</span><strong>{products.length}</strong></div>
                 <div className="admin-stat"><span>Unidades em estoque</span><strong>{products.reduce((sum, p) => sum + p.stock, 0)}</strong></div>
@@ -386,21 +404,33 @@ export default function Admin() {
               </div>
             )}
 
+            {activeTab === 'products' && user.role === 'SELLER' && <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {[
+                { label: 'Produtos esgotados', count: products.filter(p => p.stock === 0).length, to: '?tab=products&stock=out', active: stockFilter === 'out' },
+                { label: 'Destaques da homepage', count: products.filter(p => p.featured).length, to: '?tab=products&selection=featured', active: selectionFilter === 'featured' },
+                { label: 'Produtos em oferta', count: products.filter(p => p.onOffer).length, to: '?tab=products&selection=offer', active: selectionFilter === 'offer' },
+              ].map(metric => <Link key={metric.label} to={metric.to} className={`admin-stat hover:bg-accent/40 ${metric.active ? 'border-primary bg-accent/30' : ''}`} aria-current={metric.active ? 'true' : undefined}>
+                <span>{metric.label}</span><strong>{metric.count}</strong><span>Ver produtos →</span>
+              </Link>)}
+            </div>}
+
+            {activeTab === 'sales' && <SellerGoalCard key={user.id} refreshKey={salesRevision} />}
+
             {/* Stat cards rendered for sales tab */}
             {activeTab === 'sales' && salesHistory && (
               <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="admin-stat">
-                  <span>Faturamento Hoje</span>
+                  <span>Minhas vendas hoje</span>
                   <strong className="text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(salesHistory.todaySummary.totalRevenue)}
                   </strong>
                 </div>
                 <div className="admin-stat">
-                  <span>Vendas Registradas Hoje</span>
+                  <span>Meus registros hoje</span>
                   <strong>{salesHistory.todaySummary.salesCount} {salesHistory.todaySummary.salesCount === 1 ? 'venda' : 'vendas'}</strong>
                 </div>
                 <div className="admin-stat">
-                  <span>Peças Vendidas Hoje</span>
+                  <span>Minhas peças vendidas hoje</span>
                   <strong>{salesHistory.todaySummary.itemsSold} {salesHistory.todaySummary.itemsSold === 1 ? 'peça' : 'peças'}</strong>
                 </div>
               </div>
@@ -410,7 +440,7 @@ export default function Admin() {
               <div>
                 <h2 className="text-2xl">{activeTab === 'products' ? 'Catálogo de Produtos' : 'Registrar Vendas'}</h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {activeTab === 'sales' ? `${products.length} produtos disponíveis em estoque para venda.` : `Clique no ícone de estrela ⭐ para exibir o produto na seção de Destaques da Homepage.`}
+                  {activeTab === 'sales' ? `${products.filter(p => p.stock > 0).length} produtos com estoque. Selecione as quantidades para registrar a venda.` : canManage ? 'Gerencie o catálogo e selecione os destaques da homepage.' : 'Consulte fotos, estoque e oportunidades de venda.'}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -453,6 +483,17 @@ export default function Admin() {
                 <label className="block text-sm font-medium">Descrição
                   <textarea className="field mt-2 min-h-24" maxLength={5000} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} />
                 </label>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="flex min-h-11 items-center gap-3 rounded-xl border border-border p-3 text-sm">
+                    <input type="checkbox" name="featured" className="h-5 w-5 accent-primary" checked={Boolean(draft.featured)} onChange={event => setDraft({ ...draft, featured: event.target.checked })} />
+                    Destacar na homepage
+                  </label>
+                  {user.role === 'ADMIN' && <label className="flex min-h-11 items-center gap-3 rounded-xl border border-primary/30 bg-accent/20 p-3 text-sm">
+                    <input type="checkbox" name="onOffer" className="h-5 w-5 accent-primary" checked={Boolean(draft.onOffer)} onChange={event => setDraft({ ...draft, onOffer: event.target.checked })} />
+                    <span>Produto em oferta<span className="block text-xs text-muted-foreground">Visível para a equipe. Não altera preço nem homepage.</span></span>
+                  </label>}
+                </div>
 
                 {/* Photo & Gallery picker section */}
                 <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-4">
@@ -554,13 +595,26 @@ export default function Admin() {
               </form>
             )}
 
+            <div id="catalog-filters" className="mb-4 grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="text-sm font-medium">Buscar produto
+                <input className="field mt-1" name="product-search" type="search" autoComplete="off" placeholder="Nome ou categoria…" value={query} onChange={event => updateFilters({ q: event.target.value })} />
+              </label>
+              <label className="text-sm font-medium">Estoque
+                <select className="field mt-1" value={stockFilter} onChange={event => updateFilters({ stock: event.target.value })}>
+                  <option value="all">Todos os estoques</option><option value="available">Com estoque</option><option value="out">Esgotados</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium">Seleção
+                <select className="field mt-1" value={selectionFilter} onChange={event => updateFilters({ selection: event.target.value })}>
+                  <option value="all">Todos os produtos</option><option value="featured">Destaques da homepage</option><option value="offer">Produtos em oferta</option>
+                </select>
+              </label>
+              <button type="button" className="button-secondary" disabled={!query && stockFilter === 'all' && selectionFilter === 'all'} onClick={() => updateFilters({ q: '', stock: '', selection: '' })}>Limpar filtros</button>
+            </div>
+            <p className="mb-3 text-sm text-muted-foreground" role="status">{loading ? 'Atualizando catálogo…' : `${displayedProducts.length} de ${products.length} produtos`}</p>
+
             {loading ? <p role="status">Carregando produtos…</p> : !products.length ? <div className="status-panel">Nenhum produto cadastrado.</div> : (
               <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-                {activeTab === 'products' && <label className="flex items-center gap-3 px-4 py-2 text-sm">Estoque
-                  <select className="field w-auto" value={stockFilter} onChange={event => setSearchParams({ tab: 'products', stock: event.target.value })}>
-                    <option value="all">Todos os produtos</option><option value="available">Com estoque</option><option value="out">Esgotados</option>
-                  </select>
-                </label>}
                 <table className="responsive-table inventory-table w-full text-left text-sm">
                   <caption className="sr-only">Produtos, preços, estoque e ações</caption>
                   <thead className="border-b border-border bg-muted">
@@ -584,6 +638,8 @@ export default function Admin() {
                               onClick={() => toggleFeaturedProduct(product)}
                               className={`p-1.5 rounded-lg transition-colors ${product.featured ? 'text-amber-500 hover:bg-amber-500/10' : 'text-muted-foreground/40 hover:text-amber-500 hover:bg-muted'}`}
                               title={product.featured ? 'Remover dos destaques da homepage' : 'Destacar na homepage'}
+                              aria-label={`${product.featured ? 'Remover destaque de' : 'Destacar'} ${product.name}`}
+                              aria-pressed={Boolean(product.featured)}
                             >
                               <Star size={18} className={product.featured ? 'fill-amber-500' : ''} />
                             </button>
@@ -592,17 +648,14 @@ export default function Admin() {
                         <td data-label="Produto" className="p-4">
                           <div className="flex items-center gap-3">
                             {product.imageUrl ? (
-                              <img src={product.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover bg-muted" />
+                              <button type="button" className="shrink-0 rounded-lg" aria-label={`Ver foto de ${product.name}`} onClick={() => updateFilters({ product: referenceId === product.id ? '' : product.id })}><img src={product.imageUrl} alt="" width={40} height={40} loading="lazy" className="h-10 w-10 rounded-lg object-cover bg-muted" /></button>
                             ) : (
                               <div className="h-10 w-10 shrink-0 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs font-semibold">
                                 {product.name.charAt(0)}
                               </div>
                             )}
                             <div className="min-w-0">
-                              <Link className="block truncate font-medium hover:underline" title={product.name} to={'/product/' + product.id}>{product.name}</Link>
-                              <p className="truncate mt-0.5 text-xs text-muted-foreground">
-                                {typeof product.category === 'object' ? product.category.name : product.category}
-                              </p>
+                              <ProductReference product={product} expanded={referenceId === product.id} onToggle={() => updateFilters({ product: referenceId === product.id ? '' : product.id })} />
                             </div>
                           </div>
                         </td>
@@ -623,7 +676,7 @@ export default function Admin() {
                               step="1"
                               value={sales[product.id] || ''}
                               disabled={!product.stock || busy}
-                              onChange={e => setSales({ ...sales, [product.id]: Number(e.target.value) })}
+                              onChange={e => { const quantity = Number(e.target.value); setSales({ ...sales, [product.id]: quantity }); if (quantity > 0) updateFilters({ product: product.id }); }}
                             />
                           ) : canManage ? (
                             <div className="flex items-center gap-2">
@@ -639,7 +692,8 @@ export default function Admin() {
                                     categoryId: product.categoryId || (typeof product.category === 'object' ? product.category.id : product.category),
                                     description: product.description || '',
                                     imageUrl: product.imageUrl || '',
-                                    featured: product.featured
+                                    featured: product.featured,
+                                    onOffer: product.onOffer,
                                   });
                                   setImage(null);
                                   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -665,7 +719,7 @@ export default function Admin() {
                               </button>
                             </div>
                           ) : (
-                            <Link className="underline text-xs" to={'/product/' + product.id}>Ver produto</Link>
+                            <button type="button" className="button-secondary px-3 text-xs" disabled={!product.stock} onClick={() => setSearchParams({ tab: 'sales', product: product.id, q: product.name })}>Vender</button>
                           )}
                         </td>
                       </tr>
@@ -710,13 +764,22 @@ export default function Admin() {
                       setSales({});
                       setCustomItems([]);
                       setNotes('');
-                      setSaleDate(new Date().toISOString().slice(0, 10));
+                      setSaleDate(salesDay());
                       await refresh();
                       setMessage('Vendas registradas e fluxo de caixa atualizado.');
                     });
                   }}
                 >
                   {/* Venda Avulsa / Itens Adicionais */}
+                  {Object.values(sales).some(quantity => quantity > 0) && <section aria-labelledby="selected-products-title" className="rounded-xl border border-primary/25 bg-accent/20 p-4">
+                    <h3 id="selected-products-title" className="text-base font-semibold">Produtos nesta venda</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Confira todos os itens selecionados, inclusive os que não aparecem no filtro atual.</p>
+                    <ul className="mt-3 divide-y divide-border">{products.filter(product => (sales[product.id] || 0) > 0).map(product => <li key={product.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                      <div className="min-w-0 flex-1"><button type="button" className="min-h-11 text-left font-medium hover:text-primary" onClick={() => { updateFilters({ product: product.id, q: product.name, stock: '', selection: '' }); document.getElementById('catalog-filters')?.scrollIntoView({ block: 'start' }); }}>{product.name}</button>
+                        <p className="text-sm text-muted-foreground">{sales[product.id]} × {formatCurrency(product.price)} = {formatCurrency(Math.round(product.price * 100) * sales[product.id] / 100)}</p></div>
+                      <button type="button" className="button-secondary text-destructive" aria-label={`Remover ${product.name} desta venda`} disabled={busy} onClick={() => setSales(previous => { const next = { ...previous }; delete next[product.id]; return next; })}>Remover</button>
+                    </li>)}</ul>
+                  </section>}
                   <div className="rounded-xl border border-border bg-muted/30 p-4 sm:p-5 space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
@@ -851,7 +914,7 @@ export default function Admin() {
                         <input
                           type="date"
                           required
-                          max={new Date().toISOString().slice(0, 10)}
+                          max={salesDay()}
                           className="field mt-2"
                           value={saleDate}
                           onChange={e => setSaleDate(e.target.value)}
@@ -866,7 +929,7 @@ export default function Admin() {
                           Data da venda
                         </span>
                         <p className="mt-1 text-sm font-bold text-foreground">
-                          Hoje ({new Date().toLocaleDateString('pt-BR')})
+                          Hoje ({new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })})
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           Perfil Vendedor: somente lançamentos do dia atual são permitidos.
@@ -955,10 +1018,10 @@ export default function Admin() {
                               <tr key={sale.id} className="hover:bg-muted/20">
                                 <td data-label="Data" className="p-3 whitespace-nowrap">
                                   <span className="font-medium text-foreground block">
-                                    {new Date(sale.date).toLocaleDateString('pt-BR')}
+                                    {new Date(sale.date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                                   </span>
                                   <span className="text-[11px] text-muted-foreground">
-                                    {new Date(sale.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(sale.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}
                                   </span>
                                 </td>
                                 <td data-label="Descrição" className="p-3">

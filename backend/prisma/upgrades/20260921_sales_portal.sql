@@ -1,0 +1,18 @@
+BEGIN;
+
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "onOffer" BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS "MonthlySalesGoal" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "userId" TEXT NOT NULL,
+  "month" TEXT NOT NULL,
+  "target" DOUBLE PRECISION NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "MonthlySalesGoal_userId_fkey" FOREIGN KEY ("userId") REFERENCES "AdminUser"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "MonthlySalesGoal_userId_month_key" ON "MonthlySalesGoal"("userId", "month");
+CREATE INDEX IF NOT EXISTS "MonthlySalesGoal_userId_idx" ON "MonthlySalesGoal"("userId");
+
+COMMIT;

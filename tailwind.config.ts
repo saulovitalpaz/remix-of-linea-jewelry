@@ -16,6 +16,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Montserrat', 'sans-serif'],
+        serif: ['Playfair Display', 'Georgia', 'serif'],
+        script: ['Great Vibes', 'Segoe Script', 'cursive'],
       },
       colors: {
         border: "hsl(var(--border))",

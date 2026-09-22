@@ -6,9 +6,9 @@ O Frontend pode fazer build a partir da raiz de um monorepo. A presença de `bac
 
 Foi adicionado `.railwayignore` na raiz para excluir `backend/`, o protótipo Next.js `app/`, artefatos locais, documentação e arquivos de ambiente. `backend/.railwayignore` reapresenta o conteúdo do backend quando ele é escolhido explicitamente como raiz de upload, removendo depois dependências, artefatos, testes e arquivos privados. Nenhum arquivo de aplicação foi apagado por essas regras.
 
-## Publicação futura — não executada
+## Publicação autorizada em 21/09/2026
 
-A proibição do usuário continua: não executar `railway up` até a conclusão dos upgrades atuais e futuros. Os exemplos abaixo servem exclusivamente para descrever os contextos, não são uma autorização nem um registro de execução.
+O usuário autorizou commit, push para `origin/main` e `railway up` após concluir e verificar os upgrades do portal de vendas. Enviar ambos os serviços com `--detach` e registrar a confirmação do upload, sem acompanhar o status posterior do deploy. As instruções abaixo definem os contextos; o resultado efetivo fica no registro de entrega desta implementação.
 
 | Serviço | Contexto esperado no pacote | Root Directory remoto |
 | --- | --- | --- |

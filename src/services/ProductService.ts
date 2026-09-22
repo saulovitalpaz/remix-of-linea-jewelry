@@ -6,6 +6,7 @@ import { categoryIllustration } from '@/lib/category-illustrations';
 
 export const ProductService = {
   getProducts: () => api<Product[]>('/products'),
+  getTeamProducts: () => api<Product[]>('/admin/products', {}, true),
   getProductById: async (id: string): Promise<Product | undefined> => {
     try { return await api<Product>('/products/' + encodeURIComponent(id)); }
     catch (error) { if (error instanceof ApiError && error.status === 404) return undefined; throw error; }

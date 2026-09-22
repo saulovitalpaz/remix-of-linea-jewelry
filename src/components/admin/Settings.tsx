@@ -3,7 +3,7 @@ import { api, errorMessage } from '@/services/api';
 import type { AdminUser, MarketingPopup, Role } from '@/types/admin';
 import { ROLE_LABELS } from '@/types/admin';
 
-export default function Settings() {
+export default function Settings({ currentUserId }: { currentUserId: string }) {
   const [popup, setPopup] = useState<MarketingPopup | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [file, setFile] = useState<File | null>(null);
@@ -47,7 +47,18 @@ export default function Settings() {
           <p className="text-sm text-muted-foreground">{role === 'ADMIN' ? 'Acesso a produtos, vendas, campanhas e usuários.' : role === 'MANAGER' ? 'Gerencia produtos, estoque e vendas.' : 'Consulta produtos e registra vendas.'}</p>
           <button className="button-primary" disabled={busy}>{busy ? 'Aguarde…' : 'Criar usuário'}</button>
         </form>
-        <ul className="mt-8 divide-y divide-border border-t border-border">{users.map(user => <li className="flex items-center justify-between gap-3 py-4 text-sm" key={user.id}><span className="break-words">{user.name}</span><span className="shrink-0 rounded-full bg-muted px-3 py-1">{ROLE_LABELS[user.role]}</span></li>)}</ul>
+        <p className="mt-6 text-sm text-muted-foreground">Ao excluir uma conta, seu acesso é encerrado. As vendas e o nome do responsável permanecem no histórico.</p>
+        <ul className="mt-4 divide-y divide-border border-t border-border">{users.map(user => <li className="flex flex-wrap items-center justify-between gap-3 py-4 text-sm" key={user.id}>
+          <div className="min-w-0 flex-1"><p className="break-words font-medium">{user.name}{user.id === currentUserId ? ' (você)' : ''}</p><span className="text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</span></div>
+          <button type="button" className="button-secondary text-destructive" disabled={busy || user.id === currentUserId} aria-label={'Excluir usuário ' + user.name} onClick={() => {
+            if (!window.confirm(`Excluir o acesso de ${user.name}? Esta pessoa não poderá mais entrar. Todas as vendas e os dados históricos serão preservados.`)) return;
+            run(async () => {
+              await api('/users/' + encodeURIComponent(user.id), { method: 'DELETE' }, true);
+              setUsers(previous => previous.filter(person => person.id !== user.id));
+              setMessage(`Acesso de ${user.name} excluído. Histórico de vendas preservado.`);
+            });
+          }}>Excluir acesso</button>
+        </li>)}</ul>
       </section>
     </div>}
   </section>;

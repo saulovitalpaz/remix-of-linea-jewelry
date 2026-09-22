@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- compact in-memory Prisma test double */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import jwt from 'jsonwebtoken';

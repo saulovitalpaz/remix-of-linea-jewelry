@@ -12,7 +12,7 @@ O backend requer `DATABASE_URL` e `JWT_SECRET` exclusivo com pelo menos 32 carac
 
 ## Perfis e autenticação
 
-Login por nome e senha, com token de oito horas em `sessionStorage`. Cada operação protegida consulta o perfil atual no banco.
+Login por nome e senha, com sessão de até 24 horas. Cada operação protegida consulta o perfil atual no banco; excluir uma conta revoga seu acesso e preserva os registros históricos de vendas e caixa.
 
 | Perfil | Produtos/categorias | Registrar vendas | Popup/usuários |
 | --- | --- | --- | --- |
@@ -34,6 +34,7 @@ Respostas são JSON; erros usam `{ "error": "mensagem" }`. Endpoints protegidos 
 | POST `/api/categories` | ADMIN/MANAGER; nome, slug, descrição |
 | GET `/api/products` | Público; `?categorySlug=` opcional |
 | GET `/api/products/:id` | Público; 404 quando ausente |
+| GET `/api/admin/products` | Equipe autenticada; catálogo com marcações internas de oferta |
 | POST `/api/products` | ADMIN/MANAGER; nome, preço, estoque, categoryId, descrição e imagem opcional |
 | PUT `/api/products/:id` | ADMIN/MANAGER; mesmos campos completos |
 | DELETE `/api/products/:id` | ADMIN/MANAGER |
@@ -44,14 +45,20 @@ Respostas são JSON; erros usam `{ "error": "mensagem" }`. Endpoints protegidos 
 | PUT `/api/popup/:id/toggle` | ADMIN; `{ active: boolean }` |
 | DELETE `/api/popup/:id` | ADMIN |
 | GET/POST `/api/users` | ADMIN; criação com `{ name, password, role }` |
+| DELETE `/api/users/:id` | ADMIN; preserva histórico, bloqueia autoexclusão e exclusão do último administrador |
+| GET `/api/sales/history` | Equipe; indicadores diários e vendas recentes do próprio usuário |
+| GET `/api/sales/goal?month=YYYY-MM` | Equipe; meta e faturamento pessoal do mês |
+| PUT `/api/sales/goal` | Equipe; salva a própria meta com `{ month, target }` |
 | GET `/api/health` | Saúde da API e conexão PostgreSQL |
 
-Produtos aceitam JSON ou multipart; uploads usam o campo `image`, JPEG/PNG/WebP e limite de 5 MB. Preço deve ser positivo com até duas casas decimais; estoque e quantidade são inteiros. O registro de venda calcula valores com preços do banco e atualiza estoque em transação. Histórico, edição e estorno de vendas não fazem parte dos endpoints atuais.
+Produtos aceitam JSON ou multipart; uploads usam o campo `image`, JPEG/PNG/WebP e limite de 5 MB. Preço deve ser positivo com até duas casas decimais; estoque e quantidade são inteiros. O registro de venda calcula valores com preços do banco e atualiza estoque em transação. O admin pode marcar `onOffer` no formulário: a marcação aparece somente no catálogo autenticado e não altera preços ou a homepage.
+
+O vendedor acompanha vendas próprias do dia e a meta pessoal do mês no fuso `America/Sao_Paulo`. A conquista da meta é visual, sem cálculo de comissão. Os filtros de catálogo combinam busca por nome/categoria, estoque, destaques e ofertas; o resumo da venda mantém visíveis todos os itens selecionados. Fotos de referência abrem dentro do painel. O dashboard admin mostra o ranking acumulado por unidades vendidas.
 
 ## Validação e operação
 
-Na raiz: `npm run typecheck`, `npm run lint`, `npm run build`. Em `backend/`: `npm run build`, `npm test`, `npx prisma validate` e `npx prisma generate`. Os testes HTTP usam um banco simulado, sem escrever em produção; incluem filtros reais compartilhados com o catálogo. O build frontend não depende da pasta backend.
+Na raiz: `npm test` (requer dependências da raiz e do backend), `npm run typecheck`, `npm run lint`, `npm run build`. Em `backend/`: `npm run build`, `npm test`, `npx prisma validate` e `npx prisma generate`. Os testes HTTP usam um banco simulado, sem escrever em produção; incluem isolamento entre vendedores, exclusão preservando vendas, metas e ofertas privadas. O build frontend não depende da pasta backend.
 
 Os overrides de `@prisma/config` atualizam `deepmerge-ts` e `effect` para versões corrigidas sem migrar o projeto para outra versão principal do Prisma. Reavaliar esses overrides na próxima atualização do Prisma. O limitador de login está em memória por processo; múltiplas réplicas exigem armazenamento compartilhado.
 
-Publicação e alterações do banco remoto permanecem suspensas até a conclusão dos upgrades solicitados. Consulte [preparação de upload Railway](docs/railway-upload.md), [estado observado](docs/railway-status.md) e [auditoria local](docs/store-audit.md). Credenciais Cloudinary anteriormente expostas precisam ser revogadas no provedor; removê-las do código não as invalida. As credenciais do bucket devem permanecer somente nas variáveis do Backend Railway.
+Publicação autorizada pelo usuário após concluir e verificar os upgrades. O backend aplica upgrades SQL idempotentes na inicialização, incluindo a marcação de ofertas e as metas mensais; não usar `db:sync` em produção. Frontend e Backend têm contextos de upload separados, conforme [preparação de upload Railway](docs/railway-upload.md). As credenciais do bucket devem permanecer somente nas variáveis do Backend Railway.

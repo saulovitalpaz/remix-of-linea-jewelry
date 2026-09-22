@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, AlertTriangle, ShoppingBag } from 'lucide-react';
+import { Package, AlertTriangle, ShoppingBag, Home, Plus, TrendingUp } from 'lucide-react';
+import ProductReference from './ProductReference';
+import { bestSellers } from '@/lib/sales-portal';
 import type { Product } from '@/types/product';
 import type { CashFlowData } from '@/types/cashFlow';
 import { api, errorMessage } from '@/services/api';
@@ -8,12 +10,14 @@ import { formatCurrency } from '@/lib/format';
 
 interface AdminDashboardProps {
   products: Product[];
+  onAddProduct: () => void;
 }
 
-export default function AdminDashboard({ products }: AdminDashboardProps) {
+export default function AdminDashboard({ products, onAddProduct }: AdminDashboardProps) {
   const [monthlySales, setMonthlySales] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const now = new Date();
   const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit' }).formatToParts(now);
   const year = month.find(part => part.type === 'year')!.value;
@@ -31,6 +35,7 @@ export default function AdminDashboard({ products }: AdminDashboardProps) {
   }, [year, monthNumber, monthKey, retry]);
 
   const totalStock = products.reduce((sum, product) => sum + product.stock, 0);
+  const leaders = bestSellers(products);
   const outOfStockCount = products.filter(product => product.stock === 0).length;
   const totalCatalogValue = products.reduce((sum, product) => sum + Math.round(product.price * 100) * product.stock, 0) / 100;
   const metrics = [
@@ -41,6 +46,14 @@ export default function AdminDashboard({ products }: AdminDashboardProps) {
 
   return (
     <div className="space-y-5" aria-label="Painel de Controle Administrador">
+      <section className="admin-panel">
+        <h2 className="text-lg">Acessos rápidos</h2>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link to="/" className="button-secondary"><Home size={18} aria-hidden="true" />Abrir homepage</Link>
+          <button type="button" onClick={onAddProduct} className="button-primary"><Plus size={18} aria-hidden="true" />Adicionar produto</button>
+          <Link to="?tab=sales" className="button-secondary"><ShoppingBag size={18} aria-hidden="true" />Registrar venda</Link>
+        </div>
+      </section>
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {metrics.map(metric => (
           <Link to={metric.to} key={metric.label} className={`admin-stat min-w-0 p-3 sm:p-5 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'border-destructive bg-destructive/5' : ''}`}>
@@ -77,6 +90,16 @@ export default function AdminDashboard({ products }: AdminDashboardProps) {
             ) : <Link to={`?tab=cashflow&period=monthly&month=${monthKey}&category=SALE&type=INFLOW`} className="block mt-1 text-2xl font-bold tabular-nums hover:underline focus-visible:ring-2 focus-visible:ring-primary">{monthlySales === null ? 'Carregando…' : formatCurrency(monthlySales)}</Link>}
           </div>
         </div>
+      </section>
+
+      <section className="admin-panel" aria-labelledby="bestsellers-title">
+        <div className="flex items-center gap-2"><TrendingUp size={20} className="text-primary" aria-hidden="true" /><h2 id="bestsellers-title" className="text-lg">Produtos mais vendidos</h2></div>
+        <p className="mt-1 text-sm text-muted-foreground">Os 5 líderes em unidades vendidas · total acumulado</p>
+        {leaders.length ? <ol className="mt-4 divide-y divide-border">{leaders.map((product, index) => <li key={product.id} className="flex items-start gap-3 py-4">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-primary" aria-label={`${index + 1}º lugar`}>{index + 1}</span>
+          <div className="min-w-0 flex-1"><ProductReference product={product} expanded={expandedId === product.id} onToggle={() => setExpandedId(expandedId === product.id ? null : product.id)} /></div>
+          <div className="shrink-0 text-right"><strong className="text-lg tabular-nums">{product.salesCount}</strong><p className="text-xs text-muted-foreground">{product.salesCount === 1 ? 'unidade' : 'unidades'}</p></div>
+        </li>)}</ol> : <p className="mt-5 rounded-xl bg-muted/40 p-4 text-sm text-muted-foreground">O ranking aparecerá assim que houver vendas de produtos do catálogo.</p>}
       </section>
     </div>
   );

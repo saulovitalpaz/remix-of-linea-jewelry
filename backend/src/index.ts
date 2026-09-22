@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { createApp } from './app.js';
 import { uploadToObjectStorage, readFromObjectStorage } from './utils/object-storage.js';
-import { upgradeCashFlow } from './schema.js';
+import { upgradeCashFlow, upgradeSalesPortal } from './schema.js';
 
 const prisma = new PrismaClient();
 const app = createApp({ prisma, jwtSecret: process.env.JWT_SECRET || '', uploadImage: uploadToObjectStorage, readImage: readFromObjectStorage });
@@ -22,6 +22,7 @@ async function start() {
     console.warn('DB schema sync notice:', e instanceof Error ? e.message : e);
   }
   await upgradeCashFlow(prisma);
+  await upgradeSalesPortal(prisma);
   await prisma.$executeRawUnsafe('ALTER TABLE "Category" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;');
   const server = app.listen(port, '0.0.0.0', () => console.log(`API listening on port ${port}`));
   async function shutdown() {

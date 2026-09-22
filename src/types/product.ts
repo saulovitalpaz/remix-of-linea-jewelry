@@ -10,6 +10,7 @@ export interface Product {
     stock: number;
     salesCount: number;
     featured?: boolean;
+    onOffer?: boolean;
     categoryId?: string;
     isPublic?: boolean;
     createdAt?: string;

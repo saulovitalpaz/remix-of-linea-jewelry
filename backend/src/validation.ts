@@ -30,25 +30,27 @@ export function validateSaleDate(value: unknown, userRole: Role): Date {
     return now;
   }
   if (typeof value !== 'string') throw new HttpError(400, 'Data inválida.');
-  const parsed = new Date(value);
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const parsed = new Date(dateOnly ? `${value}T00:00:00-03:00` : value);
   if (isNaN(parsed.getTime())) throw new HttpError(400, 'Data inválida.');
+  if (dateOnly && parsed.toISOString().slice(0, 10) !== value) throw new HttpError(400, 'Data inválida.');
 
-  // Check if date is in the future
-  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  if (parsed.getTime() > endOfToday.getTime() + 24 * 60 * 60 * 1000) {
+  const businessDate = (date: Date) => {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+    return ['year', 'month', 'day'].map(type => parts.find(part => part.type === type)!.value).join('-');
+  };
+  const today = businessDate(now);
+  const saleDay = businessDate(parsed);
+  if (saleDay > today) {
     throw new HttpError(400, 'A data informada não pode ser futura.');
   }
 
-  // Minimum reasonable date (e.g., 2020-01-01)
-  if (parsed.getFullYear() < 2020) {
+  if (saleDay < '2020-01-01') {
     throw new HttpError(400, 'A data informada é muito antiga.');
   }
 
   if (userRole === 'SELLER') {
-    const todayIso = now.toISOString().slice(0, 10);
-    const inputIso = value.slice(0, 10);
-    const brToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(now);
-    if (inputIso !== todayIso && inputIso !== brToday) {
+    if (saleDay !== today) {
       throw new HttpError(403, 'Vendedores só podem lançar vendas referentes ao dia atual. Lançamentos retroativos são restritos a administradores e gerentes.');
     }
   }
@@ -114,5 +116,4 @@ export function salesItems(value: unknown, allowEmpty = false): { productId: str
   }
   return [...merged].sort(([a], [b]) => a.localeCompare(b)).map(([productId, quantity]) => ({ productId, quantity }));
 }
-
 

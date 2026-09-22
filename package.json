@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "test": "npm --prefix backend test && node --import ./backend/node_modules/tsx/dist/loader.mjs --test tests/*.test.ts",
     "lint": "eslint src backend/src backend/tests vite.config.ts tailwind.config.ts"
   },
   "dependencies": {
