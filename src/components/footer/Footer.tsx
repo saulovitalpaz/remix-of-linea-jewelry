@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ProductService } from '@/services/ProductService';
 import type { CategoryModel } from '@/types/product';
 
-const linkClass = 'inline-flex min-h-11 items-center text-sm text-black/70 transition-colors hover:text-primary';
+const linkClass = 'inline-flex min-h-8 items-center text-sm text-black/70 transition-colors hover:text-primary';
 
 export default function Footer() {
   const [categories, setCategories] = useState<CategoryModel[]>([]);
@@ -14,16 +14,16 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="border-t border-border bg-white px-4 py-7 text-black sm:px-6 sm:py-8">
+    <footer className="border-t border-border bg-white px-4 py-5 text-black sm:px-6 sm:py-6">
       <div className="mx-auto max-w-screen-xl">
-        <div className="grid grid-cols-2 gap-x-5 gap-y-6 md:gap-x-8 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-4 md:gap-x-8 xl:grid-cols-[1.35fr_1fr_1fr_1fr]">
           <section aria-labelledby="footer-brand" className="col-span-2 min-w-0 md:col-span-1 xl:col-span-1">
             <h2 id="footer-brand" className="leading-none">
               <span className="block font-serif text-xl tracking-[0.14em] text-primary">CHIQUE</span>
               <span className="brand-script -mt-1 block text-4xl text-neutral-700">Detalhes</span>
             </h2>
-            <p className="mt-2 max-w-md text-sm leading-6 text-black/70">Semijoias, bolsas, beleza e acessórios infantis escolhidos com carinho.</p>
-            <address className="mt-3 text-sm not-italic leading-6 text-black/70">
+            <p className="mt-2 max-w-md text-sm leading-5 text-black/70">Semijoias, bolsas, beleza e acessórios infantis escolhidos com carinho.</p>
+            <address className="mt-3 text-sm not-italic leading-5 text-black/70">
               Av. Juracy Magalhães, 3340, Q. 115<br />Boa Vista, Vitória da Conquista — BA · CEP 45055-900
             </address>
           </section>
@@ -56,7 +56,7 @@ export default function Footer() {
           </section>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 border-t border-border pt-4 text-xs leading-5 text-black/60 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 text-xs leading-5 text-black/60 sm:flex-row sm:items-end sm:justify-between">
           <div><p>© {new Date().getFullYear()} Chique Detalhes. Todos os direitos reservados.</p><p>LOJA DE VARIEDADES FONSECA LTDA · CNPJ 64.469.155/0001-54</p></div>
           <nav aria-label="Informações legais" className="flex flex-wrap gap-x-5">
             <Link to="/privacy" className={`${linkClass} text-xs`}>Privacidade</Link><Link to="/terms" className={`${linkClass} text-xs`}>Termos de uso</Link>

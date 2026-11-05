@@ -163,8 +163,8 @@ export default function CashFlowReportModal({
           </div>
 
           {/* Consolidated Financial Summary */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border border-border bg-muted/40 p-4">
+          <div className="report-summary grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-xl border border-border bg-muted/40 p-2.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Total de Entradas</span>
                 <ArrowUpRight size={16} className="text-emerald-600 dark:text-emerald-400" />
@@ -177,7 +177,7 @@ export default function CashFlowReportModal({
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <div className="rounded-xl border border-border bg-muted/40 p-2.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Total de Saídas</span>
                 <ArrowDownRight size={16} className="text-destructive" />
@@ -190,7 +190,7 @@ export default function CashFlowReportModal({
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <div className="rounded-xl border border-border bg-muted/40 p-2.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Saldo Líquido</span>
                 <DollarSign size={16} className={summary.netBalance >= 0 ? "text-emerald-600" : "text-destructive"} />
@@ -203,7 +203,7 @@ export default function CashFlowReportModal({
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <div className="rounded-xl border border-border bg-muted/40 p-2.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                 <span>Lançamentos</span>
                 <UserCheck size={16} className="text-primary" />
@@ -264,9 +264,9 @@ export default function CashFlowReportModal({
                           <td data-label="Categoria" className="p-3 whitespace-nowrap font-medium">
                             {CATEGORY_LABELS[t.category] || t.category}
                           </td>
-                          <td data-label="Descrição" className="p-3 max-w-[200px] truncate" title={t.description}>
+                          <td data-label="Descrição" className="p-3 max-w-[200px] break-words" title={t.description}>
                             <div>{t.description}</div>
-                            {t.notes && <div className="text-[10px] text-muted-foreground truncate">{t.notes}</div>}
+                            {t.notes && <div className="text-[10px] text-muted-foreground break-words">{t.notes}</div>}
                           </td>
                           <td data-label="Pagamento" className="p-3 whitespace-nowrap text-muted-foreground">
                             {t.paymentMethod ? (PAYMENT_METHOD_LABELS[t.paymentMethod] || t.paymentMethod) : '-'}

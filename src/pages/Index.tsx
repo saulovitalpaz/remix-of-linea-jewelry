@@ -49,17 +49,9 @@ export default function Index() {
     </section>
 
     {categories.length > 0 && <section id="colecoes" className="store-container py-8 md:py-14"><div className="mb-6"><p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">Encontre seu estilo</p><h2 className="text-2xl md:text-4xl">Nossas categorias</h2></div>
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">{categories.map(category => <Link key={category.id} to={'/category/' + category.slug} className="group flex h-full min-w-0 flex-col items-center rounded-2xl border border-border bg-card p-4 text-center transition-all hover:border-primary/40 hover:bg-muted/50 sm:p-6">
-        {category.icon ? (
-          <img src={category.icon} alt="" width={96} height={96} loading="lazy" className="mb-4 h-16 w-16 object-contain sm:h-20 sm:w-20 group-hover:scale-105 transition-transform" />
-        ) : (
-          <span className="mb-4 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 text-3xl sm:text-4xl shadow-sm transition-transform group-hover:scale-105" aria-hidden="true">
-            {getCategoryIllustration(category)}
-          </span>
-        )}
-        <h3 className="min-h-10 text-base font-semibold sm:text-xl">{category.name}</h3>
-        <p className="mb-4 mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">{category.description || 'Confira as peças exclusivas da nossa coleção.'}</p>
-        <span className="mt-auto inline-flex items-center gap-1.5 text-xs font-semibold text-primary">Ver coleção<ArrowRight size={14} aria-hidden="true" /></span>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{categories.map(category => <Link key={category.id} to={'/category/' + category.slug} className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary sm:p-4">
+        {category.icon ? <img src={category.icon} alt="" width={48} height={48} loading="lazy" className="h-12 w-12 shrink-0 object-contain" /> : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-2xl" aria-hidden="true">{getCategoryIllustration(category)}</span>}
+        <span className="min-w-0 flex-1"><span className="block font-serif text-base font-semibold">{category.name}</span>{category.description && <span className="mt-1 line-clamp-2 text-xs text-muted-foreground">{category.description}</span>}</span><ArrowRight size={16} className="shrink-0 text-primary" aria-hidden="true" />
       </Link>)}</div>
     </section>}
 

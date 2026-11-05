@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, AlertTriangle, ShoppingBag, Home, Plus, TrendingUp } from 'lucide-react';
+import { Package, AlertTriangle, ShoppingBag, Plus, TrendingUp } from 'lucide-react';
 import ProductReference from './ProductReference';
 import { bestSellers } from '@/lib/sales-portal';
 import type { Product } from '@/types/product';
@@ -46,33 +46,14 @@ export default function AdminDashboard({ products, onAddProduct }: AdminDashboar
 
   return (
     <div className="space-y-5" aria-label="Painel de Controle Administrador">
+      <div className="grid gap-4 lg:grid-cols-[minmax(18rem,1fr)_2fr]">
       <section className="admin-panel">
         <h2 className="text-lg">Acessos rápidos</h2>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link to="/" className="button-secondary"><Home size={18} aria-hidden="true" />Abrir homepage</Link>
           <button type="button" onClick={onAddProduct} className="button-primary"><Plus size={18} aria-hidden="true" />Adicionar produto</button>
           <Link to="?tab=sales" className="button-secondary"><ShoppingBag size={18} aria-hidden="true" />Registrar venda</Link>
         </div>
       </section>
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        {metrics.map(metric => (
-          <Link to={metric.to} key={metric.label} className={`admin-stat min-w-0 p-3 sm:p-5 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'border-destructive bg-destructive/5' : ''}`}>
-            <div className="flex items-start justify-between gap-2 text-sm text-muted-foreground">
-              <span>{metric.label}</span>
-              <metric.icon size={17} className="hidden shrink-0 sm:block" aria-hidden="true" />
-            </div>
-            <p className={`mt-auto text-2xl font-semibold tabular-nums ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'text-destructive' : ''}`}>
-              {metric.value}
-            </p>
-          </Link>
-        ))}
-      </div>
-
-      {outOfStockCount > 0 && <div className="rounded-xl bg-destructive/5 p-4">
-        <p className="font-semibold text-destructive">Precisam de reposição</p>
-        <div className="mt-2 flex flex-wrap gap-2">{products.filter(product => product.stock === 0).map(product => <Link key={product.id} to="?tab=products&stock=out" className="rounded-lg border border-destructive/30 px-3 py-2 text-sm hover:bg-destructive/10">{product.name} · esgotado</Link>)}</div>
-      </div>}
-
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
         <h2 className="mb-4 text-base font-semibold">Resumo do Valor em Estoque</h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -91,6 +72,27 @@ export default function AdminDashboard({ products, onAddProduct }: AdminDashboar
           </div>
         </div>
       </section>
+
+      </div>
+      <div className="grid max-w-4xl grid-cols-3 gap-2 sm:gap-4">
+        {metrics.map(metric => (
+          <Link to={metric.to} key={metric.label} className={`admin-stat min-w-0 p-3 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'border-destructive bg-destructive/5' : ''}`}>
+            <div className="flex items-start justify-between gap-2 text-sm text-muted-foreground">
+              <span>{metric.label}</span>
+              <metric.icon size={17} className="hidden shrink-0 sm:block" aria-hidden="true" />
+            </div>
+            <p className={`mt-auto text-2xl font-semibold tabular-nums ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'text-destructive' : ''}`}>
+              {metric.value}
+            </p>
+          </Link>
+        ))}
+      </div>
+
+      {outOfStockCount > 0 && <div className="rounded-xl bg-destructive/5 p-4">
+        <p className="font-semibold text-destructive">Precisam de reposição</p>
+        <div className="mt-2 flex flex-wrap gap-2">{products.filter(product => product.stock === 0).map(product => <Link key={product.id} to="?tab=products&stock=out" className="rounded-lg border border-destructive/30 px-3 py-2 text-sm hover:bg-destructive/10">{product.name} · esgotado</Link>)}</div>
+      </div>}
+
 
       <section className="admin-panel" aria-labelledby="bestsellers-title">
         <div className="flex items-center gap-2"><TrendingUp size={20} className="text-primary" aria-hidden="true" /><h2 id="bestsellers-title" className="text-lg">Produtos mais vendidos</h2></div>

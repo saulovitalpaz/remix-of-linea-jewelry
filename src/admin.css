@@ -7,13 +7,14 @@
 .admin-shell :where(.grid > *, .flex > *, section, form) { min-width: 0; }
 .admin-shell :where(h1, h2, h3, h4, h5) { font-family: 'Playfair Display', Georgia, serif; font-weight: 600; line-height: 1.25; letter-spacing: -.01em; }
 .admin-shell h1 { font-size: clamp(1.5rem, 3vw, 1.875rem); }
-.admin-shell h2 { font-size: 1.5rem; }
+.admin-shell h2 { font-size: 1.25rem; }
 .admin-shell h3 { font-size: 1.125rem; }
 .admin-shell :where(h4, h5) { font-size: 1rem; }
 .admin-shell :where(p, label) { line-height: 1.5; }
 .admin-shell p.text-muted-foreground { font-size: .875rem; line-height: 1.6; }
 .admin-shell :where(.text-\[10px\], .text-\[11px\]) { font-size: .75rem; }
-.admin-shell .admin-stat { padding: 1rem; gap: .5rem; }
+.admin-shell .admin-panel { padding: 1.25rem; }
+.admin-shell .admin-stat { padding: .75rem; gap: .375rem; }
 .admin-shell .admin-stat strong { font-size: clamp(1.125rem, 2.2vw, 1.5rem); font-weight: 600; overflow-wrap: anywhere; }
 .admin-shell .admin-stat span { font-size: .75rem; font-weight: 500; letter-spacing: normal; text-transform: none; }
 .admin-shell :where(input, select, textarea) { max-width: 100%; }
@@ -57,7 +58,10 @@
 
 .admin-shell .inventory-table td .truncate { white-space: nowrap; }
 .admin-shell .inventory-table th[data-label], .admin-shell .inventory-table td { padding: .5rem .75rem; }
-.admin-shell .inventory-table th:nth-last-child(4) { width: 45%; }
+.admin-shell .inventory-table { table-layout: auto; }
+.admin-shell .inventory-table th { padding: .65rem .75rem; white-space: nowrap; }
+.admin-shell .inventory-table th:nth-last-child(4) { width: auto; }
+.admin-shell .inventory-table th:nth-last-child(3), .admin-shell .inventory-table th:nth-last-child(2), .admin-shell .inventory-table th:last-child { width: 1%; }
 .cash-entry summary { list-style: none; }
 .cash-entry summary::-webkit-details-marker { display: none; }
 .cash-entry summary > span:first-child::before { content: '＋'; color: hsl(var(--primary)); margin-right: .4rem; }
@@ -93,4 +97,9 @@
   .cash-report .report-notes { break-inside: avoid; min-height: 42mm; border: 1px solid #777; }
   .cash-report .print\:flex { display: flex !important; break-inside: avoid; }
   .cash-report a::after { content: none !important; }
+}
+
+@media print {
+  .cash-report .report-summary > div { padding: 2mm 3mm !important; }
+  .cash-report .report-summary p { line-height: 1.2; }
 }

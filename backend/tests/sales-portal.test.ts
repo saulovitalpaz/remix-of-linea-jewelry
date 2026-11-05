@@ -37,13 +37,14 @@ async function fixture() {
       findUnique: async ({ where }: any) => products.find(product => product.id === where.id) ?? null,
       create: async ({ data }: any) => ({ id: 'created', ...data, category: { id: 'c1' } }),
       update: async ({ where, data }: any) => Object.assign(products.find(product => product.id === where.id)!, data),
+      updateMany: async () => ({ count: 1 }),
     },
     category: { findFirst: async () => ({ id: 'c1' }) },
     dailySales: {
       create: async ({ data }: any) => { const sale = { id: `sale-${sales.length}`, createdAt: new Date(), ...data }; sales.push(sale); return sale; },
       findMany: async ({ where = {} }: any) => sales.filter(sale => (!where.userId || sale.userId === where.userId) && (!where.date?.gte || sale.date >= where.date.gte) && (!where.date?.lt || sale.date < where.date.lt)),
     },
-    cashTransaction: { findMany: async () => [], create: async ({ data }: any) => ({ id: 'cash-sale', ...data }) },
+    cashTransaction: { findMany: async () => cash, create: async ({ data }: any) => { const entry = { id: 'cash-sale', ...data }; cash.push(entry); return entry; } },
     monthlySalesGoal: {
       findUnique: async ({ where }: any) => goals.get(`${where.userId_month.userId}:${where.userId_month.month}`) ?? null,
       upsert: async ({ where, create, update }: any) => { const goal = { ...create, ...update }; goals.set(`${where.userId_month.userId}:${where.userId_month.month}`, goal); return goal; },
@@ -142,5 +143,17 @@ test('offers remain private publicly and only admins can set them while multipar
     assert.equal(edited.featured, false); assert.equal(edited.onOffer, false);
     const preserved = await (await f.request('/products/p1', 'PUT', 'admin', { name: 'Ring', price: 10, stock: 2, categoryId: 'c1' })).json();
     assert.equal(preserved.featured, false); assert.equal(preserved.onOffer, false);
+  } finally { await f.close(); }
+});
+
+
+test('catalog and custom sale items are recorded for history and cash reports', async () => {
+  const f = await fixture();
+  try {
+    const response = await f.request('/sales/close-day', 'POST', 'seller', { itemsSoldData: [{ productId: 'p1', quantity: 2 }], customItems: [{ description: 'Bolsa', price: 5, quantity: 1 }] });
+    assert.equal(response.status, 201);
+    const history = await (await f.request('/sales/history', 'GET', 'seller')).json();
+    assert.match(history.userRecentSales.find((sale: any) => sale.id.startsWith('sale-')).description, /2x Ring.*1x Bolsa/);
+    assert.match((f.cash.at(-1) as any).description, /2x Ring.*1x Bolsa/);
   } finally { await f.close(); }
 });

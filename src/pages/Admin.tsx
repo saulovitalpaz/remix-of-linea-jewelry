@@ -314,6 +314,7 @@ export default function Admin() {
                 <span className="sr-only sm:hidden">Instalar webapp</span>
               </button>
             )}
+            <Link to="/" className="button-secondary px-3 sm:px-4" aria-label="Abrir homepage"><span>Início</span></Link>
             <button aria-label="Sair da conta" className="button-secondary px-3 sm:px-4" onClick={logout}>
               <LogOut size={18} aria-hidden="true" />
               <span className="hidden sm:inline">Sair</span>
@@ -619,7 +620,7 @@ export default function Admin() {
                   <caption className="sr-only">Produtos, preços, estoque e ações</caption>
                   <thead className="border-b border-border bg-muted">
                     <tr>
-                      {activeTab === 'products' && <th scope="col" className="p-4 w-12 text-center" title="Destaque Homepage">Destaque</th>}
+                      {activeTab === 'products' && <th scope="col" className="px-3 py-2 text-center whitespace-nowrap" title="Destaque Homepage">Destaque</th>}
                       <th scope="col" className="p-4">Produto</th>
                       <th scope="col" className="p-4">Preço</th>
                       <th scope="col" className="p-4">Estoque</th>

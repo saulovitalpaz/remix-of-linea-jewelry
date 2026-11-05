@@ -225,23 +225,21 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
     const paymentMethod = req.body?.paymentMethod ? text(req.body.paymentMethod, 'Forma de pagamento', 50) : null;
     const sale = await prisma.$transaction(async tx => {
       let cents = 0; let itemsSold = 0;
+      const soldDetails: string[] = [];
       for (const item of items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } });
         if (!product) throw new HttpError(404, 'Um produto não está mais disponível.');
         const updated = await tx.product.updateMany({ where: { id: item.productId, stock: { gte: item.quantity } }, data: { stock: { decrement: item.quantity }, salesCount: { increment: item.quantity } } });
         if (!updated.count) throw new HttpError(409, 'Estoque insuficiente. Atualize os produtos e confira as quantidades.');
         cents += Math.round(product.price * 100) * item.quantity; itemsSold += item.quantity;
+        soldDetails.push(`${item.quantity}x ${product.name}`);
       }
       for (const ci of customItems) {
         cents += Math.round(ci.price * 100) * ci.quantity;
         itemsSold += ci.quantity;
+        soldDetails.push(`${ci.quantity}x ${ci.description}`);
       }
-      let desc = `Venda registrada (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'})`;
-      if (customItems.length > 0 && items.length === 0) {
-        desc = `Venda avulsa: ${customItems.map(c => `${c.quantity > 1 ? c.quantity + 'x ' : ''}${c.description}`).join(', ')}`;
-      } else if (customItems.length > 0) {
-        desc = `Venda mista (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'}, incl. avulsos)`;
-      }
+      const desc = `Venda (${itemsSold} ${itemsSold === 1 ? 'peça' : 'peças'}): ${soldDetails.join(', ')}`;
       const createdSale = await tx.dailySales.create({
         data: {
           date: saleDate,
