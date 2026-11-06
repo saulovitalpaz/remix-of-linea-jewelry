@@ -47,11 +47,10 @@ export default function AdminDashboard({ products, onAddProduct }: AdminDashboar
   return (
     <div className="space-y-5" aria-label="Painel de Controle Administrador">
       <div className="grid gap-4 lg:grid-cols-[minmax(18rem,1fr)_2fr]">
-      <section className="admin-panel">
-        <h2 className="text-lg">Acessos rápidos</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button type="button" onClick={onAddProduct} className="button-primary"><Plus size={18} aria-hidden="true" />Adicionar produto</button>
-          <Link to="?tab=sales" className="button-secondary"><ShoppingBag size={18} aria-hidden="true" />Registrar venda</Link>
+      <section className="flex flex-wrap content-start items-start gap-3" aria-label="Ações rápidas">
+        <div className="flex w-full gap-2">
+          <button type="button" onClick={onAddProduct} className="button-primary flex-1 whitespace-nowrap px-2 text-xs sm:px-4 sm:text-sm"><Plus size={18} aria-hidden="true" />Adicionar produto</button>
+          <Link to="?tab=sales" className="button-secondary flex-1 whitespace-nowrap px-2 text-xs sm:px-4 sm:text-sm"><ShoppingBag size={18} aria-hidden="true" />Registrar venda</Link>
         </div>
       </section>
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">

@@ -1,4 +1,6 @@
-# Revisão do administrativo — 21/09/2026
+# Revisão histórica do administrativo — 21/09/2026
+
+> Para resultados atuais, consulte [check-up de testes e operação](checkup-atual.md).
 
 Critérios: [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md) e ui-ux-pro-max (hierarquia, densidade, conteúdo longo e navegação).
 
@@ -12,6 +14,6 @@ Achados na versão anterior:
 
 Correções: estoque e categorias compactos; lançamentos em duas linhas com detalhes expansíveis; indicadores vinculados a filtros na URL; identificação nominal dos esgotados; imagem transparente ou cinco emojis por categoria; relatório isolado em portal com A4, margens, marca, título, observações e assinaturas.
 
-Validação: builds TypeScript/Vite e backend; testes HTTP e armazenamento incluindo bytes preservados no upload de categoria, autorização, conservação da imagem ao editar e retorno ao emoji. Lint direcionado aos arquivos alterados. O lint geral contém sete erros preexistentes de `no-explicit-any` em `backend/tests/api.test.ts`.
+Validação: builds TypeScript/Vite e backend; testes HTTP e armazenamento incluindo bytes preservados no upload de categoria, autorização, conservação da imagem ao editar e retorno ao emoji. Lint direcionado aos arquivos alterados. Na verificação posterior, o lint passou sem erros e registrou sete avisos de Fast Refresh.
 
 Limite: nenhum navegador disponível no runtime desta sessão; impressão física, PDF e layout visual não foram conferidos em navegador.

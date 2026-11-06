@@ -34,7 +34,7 @@ Admin: produtos, vendas, popup e criação de usuários. Gerência: produtos e v
 - [x] Admin: login por nome, sessão validada, formulários de produto/estoque/registro de vendas e configurações de popup/usuários por perfil.
 - [x] Ferramentas/docs: dependências, typecheck e lint executáveis, README e exemplos de ambiente atualizados.
 - [x] Validar localmente: quatro testes, TypeScript frontend/backend, lint sem erros, builds, Prisma validate/generate e audits sem vulnerabilidades.
-- [ ] Inspeção visual no navegador e integração PostgreSQL real: indisponíveis nesta sessão; limites registrados em `docs/store-audit.md`.
-- [ ] Publicação e aplicação do SQL remoto: suspensas conforme instrução do usuário.
+- Inspeção visual no navegador não foi concluída; limites atuais em `docs/checkup-atual.md`.
+- Publicação concluída posteriormente; o backend executa upgrades idempotentes na inicialização. Veja `docs/checkup-atual.md`.
 
 Referências: [Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md), [Express security](https://expressjs.com/en/advanced/best-practice-security/).

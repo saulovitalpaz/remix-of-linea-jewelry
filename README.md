@@ -20,7 +20,7 @@ Login por nome e senha, com sessão de até 24 horas. Cada operação protegida 
 | MANAGER | Gerenciar | Sim | Não |
 | SELLER | Consultar | Sim | Não |
 
-O script `backend/prisma/upgrades/20260920_users.sql` prepara nome, login único e perfil. A conta legada de Bárbara passa a usar **Bárbara Paz**, preservando `passwordHash`. O script não cria senha nem administrador padrão. Antes da aplicação futura, revisar o SQL e fazer backup. `npm run db:upgrade` modifica o banco indicado por `DATABASE_URL`: **não foi executado nesta implementação**. O comando legado `db:sync` não deve ser usado para atualizar produção.
+O script `backend/prisma/upgrades/20260920_users.sql` prepara nome, login único e perfil. A conta legada de Bárbara passa a usar **Bárbara Paz**, preservando `passwordHash`. O script não cria senha nem administrador padrão. O backend executa upgrades idempotentes na inicialização. Antes de executar manualmente `npm run db:upgrade`, revisar o SQL e fazer backup; o comando modifica o banco indicado por `DATABASE_URL`. O comando legado `db:sync` não deve ser usado para atualizar produção.
 
 ## API
 

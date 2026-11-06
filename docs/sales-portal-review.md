@@ -19,4 +19,4 @@ Os testes verificam ofertas ausentes das respostas públicas, permissões de alt
 
 ## Entrega
 
-O usuário autorizou commit e push em `origin/main`, seguidos de upload dos serviços Frontend e Backend com `railway up --detach`. Os upgrades SQL são idempotentes e executados na inicialização do Backend. A confirmação dos uploads será registrada na mensagem de entrega, sem consulta ao status posterior do deploy.
+O usuário autorizou commit e push em `origin/main`, seguidos de upload dos serviços Frontend e Backend com `railway up --detach`. Os upgrades SQL são idempotentes e executados na inicialização do Backend. Os deployments de 05/11/2026 foram confirmados como SUCCESS; consulte [check-up atual](checkup-atual.md).

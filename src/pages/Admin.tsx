@@ -326,7 +326,6 @@ export default function Admin() {
       <main id="main-content" className="store-container py-6 sm:py-10">
         {activeTab === 'dashboard' && user.role === 'ADMIN' && <div className="mb-6 flex flex-wrap items-start justify-between gap-4 sm:mb-8">
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">{ROLE_LABELS[user.role]}</p>
             <h1 className="text-2xl sm:text-3xl">{new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite'}, {user.name}</h1>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Visão geral do catálogo, estoque e vendas da loja.

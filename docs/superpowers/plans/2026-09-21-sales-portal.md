@@ -21,4 +21,4 @@
 - [x] Dashboard e equipe: `AdminDashboard.tsx` e `Settings.tsx`. Atalhos homepage/novo produto, ranking acumulado de cinco mais vendidos, exclusão de conta com confirmação e preservação do histórico.
 - [x] Visual e categorias: `Footer.tsx`, folhas de estilo, configuração de fontes, `category-illustrations.ts` e `CategoryManager.tsx`. Cinco opções específicas por categoria, rodapé compacto, tipografia inspirada na palavra Detalhes da marca com tamanhos e pesos legíveis. Revisar a logomarca antes de escolher fontes.
 - [x] Verificar: `npm --prefix backend test`, `npm --prefix backend run build`, `npm run lint`, `npm run build`. Revisão independente de código; revisão visual desktop/celular quando browser disponível.
-- [ ] Publicar: revisar diff e arquivos, commit de todo trabalho da tarefa, `git push origin main`, `railway up --detach` no serviço/projeto vinculado; registrar confirmação de envio sem consultar status de deploy.
+- [x] Publicação realizada; deployments verificados em 05/11/2026. Consulte [check-up atual](../../checkup-atual.md).

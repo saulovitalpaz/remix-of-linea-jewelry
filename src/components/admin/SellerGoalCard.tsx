@@ -29,18 +29,14 @@ export default function SellerGoalCard({ refreshKey }: { refreshKey: number }) {
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><h2 id="seller-goal-title" className="flex items-center gap-2 text-lg"><Target size={20} aria-hidden="true" />Minha meta mensal</h2>
         <p className="mt-1 text-sm text-muted-foreground">{monthLabel} · somente minhas vendas</p></div>
-      {goal?.target && !editing ? <button type="button" className="button-secondary" onClick={() => { setEditing(true); setMessage(''); }}>Editar meta</button> : null}
+      {goal?.target && !editing ? <div className="flex flex-wrap items-center gap-3"><div className="text-right"><p className="text-sm text-muted-foreground">Minha meta</p><p className="text-xl font-semibold tabular-nums">{formatCurrency(goal.target)}</p></div><button type="button" className="button-secondary" onClick={() => { setEditing(true); setMessage(''); }}>Editar meta</button></div> : null}
     </div>
     {error && <p className="notice-error mt-4" role="alert">{error} <button type="button" className="underline" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></p>}
     {!goal && !error && <p className="mt-4 text-sm" role="status">Carregando sua meta…</p>}
     {goal && <>
-      <div className="my-5 grid gap-3 sm:grid-cols-3">
-        <div><p className="text-sm text-muted-foreground">Vendido no mês</p><p className="text-2xl font-semibold tabular-nums">{formatCurrency(goal.totalRevenue)}</p></div>
-        <div><p className="text-sm text-muted-foreground">Minha meta</p><p className="text-xl font-semibold tabular-nums">{goal.target ? formatCurrency(goal.target) : 'Ainda não definida'}</p></div>
-        {goal.target ? <div><p className="text-sm text-muted-foreground">Falta para alcançar</p><p className="text-xl font-semibold tabular-nums">{formatCurrency(progress.remaining)}</p></div> : null}
-      </div>
+      <div className="my-4"><p className="text-sm text-muted-foreground">Vendido no mês</p><p className="text-2xl font-semibold tabular-nums">{formatCurrency(goal.totalRevenue)}</p></div>
       {goal.target ? <>
-        <div className="mb-2 flex justify-between gap-3 text-sm"><span>Progresso do mês</span><strong className="tabular-nums">{progress.percent}%</strong></div>
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2 text-sm"><span>Falta para alcançar: <strong className="tabular-nums">{formatCurrency(progress.remaining)}</strong></span><strong className="tabular-nums">{progress.percent}%</strong></div>
         <progress className="h-3 w-full overflow-hidden rounded-full accent-primary" value={progress.percent} max={100} aria-label="Progresso da minha meta mensal">{progress.percent}%</progress>
         {progress.achieved && <div className="mt-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-card p-4" role="status">
           <Trophy size={32} className="shrink-0 text-primary" aria-hidden="true" />
