@@ -3,6 +3,8 @@
   "steps": {
     "install": {
       "commands": [
+        "COPY:package.json .",
+        "COPY:package-lock.json .",
         "env -u NPM_CONFIG_PRODUCTION -u npm_config_production npm ci --include=dev",
         "PATH:/app/node_modules/.bin"
       ],
