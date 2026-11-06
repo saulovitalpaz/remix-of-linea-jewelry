@@ -6,8 +6,8 @@ Atualizado em 05/11/2026. Os documentos anteriores são registros históricos, n
 
 - `npm test`: 22 testes passaram; incluem API com banco simulado, bucket simulado, vendas, metas e regras do catálogo.
 - `npm run build` e `npm --prefix backend run build`: passaram.
-- `npm run lint`: zero erros e sete avisos `react-refresh/only-export-components` em componentes UI. Afetam a atualização de desenvolvimento, não demonstram defeito em produção.
-- Após atualizar os arquivos de dependências, `npm audit --omit=dev` informou zero vulnerabilidades no frontend e no backend. A auditoria completa ainda indica sete entradas moderadas no frontend e duas no backend, relacionadas ao minimatch em ferramentas de desenvolvimento; não foi executado `audit fix --force`.
+- `npm run lint -- --max-warnings=0`: zero erros e zero avisos; exportações de utilitários foram separadas dos componentes, mantendo a regra de Fast Refresh ativa.
+- `npm audit` completo informou zero vulnerabilidades no frontend e no backend. A dependência transitiva do lint foi atualizada para a versão corrigida e o nodemon não utilizado foi removido.
 - Inspeção com Playwright/Chrome: homepage, menus desktop e celular, dashboard, meta e relatório foram conferidos. O painel usou dados simulados; Escape foi verificado em ambos os menus. O PDF de exemplo preservou os itens, observações e assinaturas em uma página. Essa amostra não garante ausência de falhas ou redundâncias em outras telas e tamanhos.
 
 ## Produção observada
@@ -22,4 +22,6 @@ Os logs são uma amostra temporal e não provam saúde contínua. Backups, resta
 
 - Complementar a inspeção visual com dados reais autorizados, outros tamanhos e relatório com múltiplas páginas.
 - Em ambiente de teste, registrar uma venda e conferir estoque, histórico e relatório; testar upload e leitura de imagem.
-- Monitorar conexões PostgreSQL e revisar backup/restauração; acompanhar correções das ferramentas de desenvolvimento e atualização planejada do Recharts.
+- Monitorar conexões PostgreSQL e revisar backup/restauração; acompanhar novas versões e auditorias das ferramentas de desenvolvimento.
+
+Os arquivos `railpack.json` usam instalação a partir do lockfile e removem a variável obsoleta `NPM_CONFIG_PRODUCTION` apenas nos comandos npm, preservando as dependências de desenvolvimento no build. O backend inicia diretamente pelo Node. A eficácia em produção deve ser confirmada pelos logs após o deploy.
