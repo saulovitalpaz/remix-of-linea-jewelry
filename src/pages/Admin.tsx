@@ -331,6 +331,10 @@ export default function Admin() {
               Visão geral do catálogo, estoque e vendas da loja.
             </p>
           </div>
+          <div className="flex w-full gap-2 sm:w-auto" aria-label="Ações rápidas">
+            <button type="button" onClick={() => { setDraft({ ...emptyDraft, categoryId: categories[0]?.id || '' }); setImage(null); setTab('products'); }} className="button-primary flex-1 whitespace-nowrap px-2 text-xs sm:flex-none sm:px-4 sm:text-sm"><Plus size={18} aria-hidden="true" />Adicionar produto</button>
+            <Link to="?tab=sales" className="button-secondary flex-1 whitespace-nowrap px-2 text-xs sm:flex-none sm:px-4 sm:text-sm"><Receipt size={18} aria-hidden="true" />Registrar venda</Link>
+          </div>
         </div>}
 
         <nav aria-label="Seções do painel" className="admin-bottom-nav">
@@ -381,10 +385,7 @@ export default function Admin() {
         )}
 
         {activeTab === 'dashboard' && user.role === 'ADMIN' ? (
-          <AdminDashboard
-            products={products}
-            onAddProduct={() => { setDraft({ ...emptyDraft, categoryId: categories[0]?.id || '' }); setImage(null); setTab('products'); }}
-          />
+          <AdminDashboard products={products} />
         ) : activeTab === 'cashflow' && user.role === 'ADMIN' ? (
           <CashFlowManager user={user} />
         ) : activeTab === 'products' && productSection === 'categories' && user.role === 'ADMIN' ? (

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filterTeamProducts, goalProgress, bestSellers, salesDay, salesMonth } from '../src/lib/sales-portal.ts';
+import { filterTeamProducts, goalProgress, bestSellers, salesDay, salesMonth, monthlyCashFlowParams } from '../src/lib/sales-portal.ts';
 
 const products = [
   { id: 'a', name: 'Anél dourado', category: 'Anéis', description: null, price: 100, stock: 0, salesCount: 5, featured: true, onOffer: false },
@@ -32,4 +32,17 @@ test('goal progress rounds currency, caps illustration, and has no false achieve
 test('best sellers exclude unsold products and do not reorder the catalog', () => {
   assert.deepEqual(bestSellers(products).map(p => p.id), ['b', 'a']);
   assert.deepEqual(products.map(p => p.id), ['a', 'b', 'c']);
+});
+
+
+test('monthly financial queries use São Paulo boundaries and separate expenses from withdrawals', () => {
+  const sales = new URLSearchParams(monthlyCashFlowParams('2026-11', 'SALE'));
+  const expenses = new URLSearchParams(monthlyCashFlowParams('2026-11', 'EXPENSE'));
+  assert.equal(sales.get('startDate'), '2026-11-01T03:00:00.000Z');
+  assert.equal(sales.get('endDate'), '2026-12-01T02:59:59.999Z');
+  assert.equal(sales.get('category'), 'SALE');
+  assert.equal(sales.get('type'), 'INFLOW');
+  assert.equal(expenses.get('category'), 'EXPENSE');
+  assert.equal(expenses.get('type'), 'OUTFLOW');
+  assert.equal(new URLSearchParams(monthlyCashFlowParams('2026-12', 'SALE')).get('endDate'), '2027-01-01T02:59:59.999Z');
 });

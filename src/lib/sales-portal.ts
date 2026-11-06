@@ -39,3 +39,12 @@ export function salesDay(date = new Date()) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
   return ['year', 'month', 'day'].map(type => parts.find(part => part.type === type)!.value).join('-');
 }
+
+
+export function monthlyCashFlowParams(month: string, category: 'SALE' | 'EXPENSE') {
+  const [year, monthNumber] = month.split('-').map(Number);
+  // Current business records use São Paulo's UTC-03:00 offset.
+  const start = new Date(Date.UTC(year, monthNumber - 1, 1, 3));
+  const end = new Date(Date.UTC(year, monthNumber, 1, 3) - 1);
+  return new URLSearchParams({ startDate: start.toISOString(), endDate: end.toISOString(), category, type: category === 'SALE' ? 'INFLOW' : 'OUTFLOW' }).toString();
+}
