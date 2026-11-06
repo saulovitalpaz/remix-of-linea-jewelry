@@ -47,7 +47,7 @@ export default function AdminDashboard({ products }: AdminDashboardProps) {
 
   return (
     <div className="space-y-5" aria-label="Painel de Controle Administrador">
-      <div className="max-w-4xl space-y-4">
+      <div className="dashboard-overview max-w-4xl space-y-4">
         <section className="rounded-2xl border border-border bg-card p-4 sm:p-5" aria-labelledby="financial-summary">
           <h2 id="financial-summary" className="mb-3 text-base font-semibold">Resumo financeiro</h2>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -66,7 +66,7 @@ export default function AdminDashboard({ products }: AdminDashboardProps) {
           </div>
           {error && <div className="mt-3 flex flex-wrap items-center gap-2 text-sm"><p role="alert" className="text-destructive">{error}</p><button className="button-secondary" onClick={() => { setError(''); setMonthlyTotals(null); setRetry(value => value + 1); }}>Tentar novamente</button></div>}
         </section>
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="dashboard-metrics grid grid-cols-3 gap-2 sm:gap-4">
           {metrics.map(metric => (
             <Link to={metric.to} key={metric.label} className={`admin-stat min-w-0 p-3 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary ${metric.label === 'Produtos esgotados' && metric.value > 0 ? 'border-destructive bg-destructive/5' : ''}`}>
               <div className="flex items-start justify-between gap-2 text-sm text-muted-foreground"><span>{metric.label}</span><metric.icon size={17} className="hidden shrink-0 sm:block" aria-hidden="true" /></div>
