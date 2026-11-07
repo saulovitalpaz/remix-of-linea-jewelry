@@ -15,6 +15,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => console.warn('PWA ServiceWorker notice:', err));
+    navigator.serviceWorker.register('/sw.js?v=3').catch(err => console.warn('PWA ServiceWorker notice:', err));
   });
 }
