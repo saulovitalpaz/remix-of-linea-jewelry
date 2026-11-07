@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, SetStateAction } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, Package, Settings as SettingsIcon, Receipt, LogOut, Plus, Pencil, Trash2, Layers, Star, ImageIcon, X, Check, CircleDollarSign, Download } from 'lucide-react';
 import Settings from '@/components/admin/Settings';
@@ -54,6 +54,13 @@ interface SalesHistoryData {
   }>;
 }
 
+interface QuoteData {
+  items: Array<{ productId: string; name: string; price: number; quantity: number }>;
+  status: 'OPEN' | 'COMPLETED';
+  expiresAt: string;
+  sale: { id: string; totalRevenue: number; itemsSold: number; date: string; userName: string | null } | null;
+}
+
 const emptyDraft: Draft = { name: '', price: '', stock: '0', categoryId: '', description: '', imageUrl: '', featured: false };
 
 interface BeforeInstallPromptEvent extends Event {
@@ -70,7 +77,8 @@ export default function Admin() {
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') || '';
-  const setTab = (value: string) => setSearchParams(value ? { tab: value } : {});
+  const quoteToken = searchParams.get('quote');
+  const setTab = (value: string) => setSearchParams(value ? { tab: value, ...(value === 'sales' && quoteToken ? { quote: quoteToken } : {}) } : {});
   const stockFilter = ['out', 'available'].includes(searchParams.get('stock') || '') ? searchParams.get('stock')! : 'all';
   const selectionFilter = searchParams.get('selection') || 'all';
   const query = searchParams.get('q') || '';
@@ -87,7 +95,14 @@ export default function Admin() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>();
   const [showGalleryModal, setShowGalleryModal] = useState(false);
-  const [sales, setSales] = useState<Record<string, number>>({});
+  const [salesDraft, setSalesDraft] = useState<{ quoteToken: string | null; items: Record<string, number> }>({ quoteToken: null, items: {} });
+  const sales = salesDraft.quoteToken === quoteToken ? salesDraft.items : {};
+  const setSales = (value: SetStateAction<Record<string, number>>) => setSalesDraft(previous => ({
+    quoteToken,
+    items: typeof value === 'function' ? value(previous.quoteToken === quoteToken ? previous.items : {}) : value,
+  }));
+  const [loadedQuote, setLoadedQuote] = useState<{ token: string; data: QuoteData } | null>(null);
+  const quote = loadedQuote?.token === quoteToken ? loadedQuote.data : null;
   const [notes, setNotes] = useState('');
   const [saleDate, setSaleDate] = useState(() => salesDay());
   const [salePaymentMethod, setSalePaymentMethod] = useState('PIX');
@@ -141,6 +156,7 @@ export default function Admin() {
     setProducts([]);
     setDraft(null);
     setSales({});
+    setLoadedQuote(null);
     setNotes('');
     setSaleDate(salesDay());
     setSalePaymentMethod('PIX');
@@ -200,6 +216,18 @@ export default function Admin() {
     return () => { live = false; };
   }, [user, tab]);
 
+  useEffect(() => {
+    let live = true;
+    if (user && quoteToken) {
+      api<QuoteData>(`/quotes/${encodeURIComponent(quoteToken)}`, {}, true).then(data => {
+        if (!live) return;
+        setLoadedQuote({ token: quoteToken, data });
+        setSalesDraft({ quoteToken, items: data.status === 'OPEN' ? Object.fromEntries(data.items.map(item => [item.productId, item.quantity])) : {} });
+      }).catch(e => { if (live) setError(errorMessage(e)); });
+    }
+    return () => { live = false; };
+  }, [user, quoteToken]);
+
 
   useEffect(() => {
     if (!draft) return;
@@ -220,7 +248,7 @@ export default function Admin() {
       const data = await api<{ token: string; user: AdminUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
       session.set(data.token);
       setUser(data.user);
-      setTab(data.user.role === 'ADMIN' ? 'dashboard' : 'sales');
+      setTab(quoteToken ? 'sales' : data.user.role === 'ADMIN' ? 'dashboard' : 'sales');
       setPassword('');
     });
   }
@@ -258,7 +286,7 @@ export default function Admin() {
           <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Chique Detalhes</p>
         </div>
         <h1 className="text-center text-2xl">Acesso da equipe</h1>
-        <p className="mb-8 mt-2 text-center text-sm text-muted-foreground">Entre com seu nome de acesso e senha.</p>
+        <p className="mb-8 mt-2 text-center text-sm text-muted-foreground">{quoteToken ? 'Faça login para acessar o orçamento.' : 'Entre com seu nome de acesso e senha.'}</p>
         <form onSubmit={login} className="space-y-5">
           <label className="block text-sm font-medium">Nome de acesso
             <input className="field mt-2" name="username" autoComplete="username" required maxLength={100} value={username} onChange={e => setUsername(e.target.value)} placeholder="Digite seu nome de acesso" />
@@ -732,10 +760,21 @@ export default function Admin() {
 
             {activeTab === 'sales' && (
               <>
+                {quoteToken && <section className="admin-panel mt-6 space-y-3" aria-labelledby="quote-title">
+                  <div className="flex flex-wrap items-center justify-between gap-3"><h3 id="quote-title" className="text-lg font-semibold">Orçamento da sacola</h3><button type="button" className="button-secondary text-sm" onClick={() => { setSearchParams({ tab: 'sales' }); setLoadedQuote(null); setSales({}); setError(''); }}>Nova venda sem orçamento</button></div>
+                  {!quote ? <p className="text-sm text-muted-foreground">{error ? 'Não foi possível carregar o orçamento.' : 'Carregando orçamento…'}</p> : <>
+                    <ul className="space-y-1 text-sm">{quote.items.map(item => <li key={item.productId}>{item.quantity}x {item.name} — {formatCurrency(item.price)} cada{!loading && !products.some(product => product.id === item.productId) ? ' (produto indisponível)' : ''}</li>)}</ul>
+                    {quote.status === 'COMPLETED' && quote.sale ? <p className="text-sm font-semibold">Venda já registrada: {formatCurrency(quote.sale.totalRevenue)} · {quote.sale.itemsSold} {quote.sale.itemsSold === 1 ? 'peça' : 'peças'} · {quote.sale.userName}</p> : <p className="text-sm text-muted-foreground">Confira as quantidades, os preços atuais e o estoque antes de confirmar.</p>}
+                  </>}
+                </section>}
                 <form
                   className="admin-panel mt-6 space-y-6"
                   onSubmit={e => {
                     e.preventDefault();
+                    if (quoteToken && (!quote || quote.status !== 'OPEN')) {
+                      setError('O orçamento precisa estar válido e disponível para registrar a venda.');
+                      return;
+                    }
                     const itemsSoldData = Object.entries(sales).filter(([, quantity]) => quantity > 0).map(([productId, quantity]) => ({ productId, quantity }));
                     const customItemsData = customItems.map(ci => ({
                       description: ci.description,
@@ -760,12 +799,14 @@ export default function Admin() {
                           notes,
                           date: canManage ? saleDate : undefined,
                           paymentMethod: salePaymentMethod,
+                          quoteToken: quoteToken || undefined,
                         })
                       }, true);
                       setSales({});
                       setCustomItems([]);
                       setNotes('');
                       setSaleDate(salesDay());
+                      if (quoteToken) { setSearchParams({ tab: 'sales' }, { replace: true }); setLoadedQuote(null); }
                       await refresh();
                       setMessage('Vendas registradas e fluxo de caixa atualizado.');
                     });
@@ -779,7 +820,7 @@ export default function Admin() {
                       <div className="min-w-0 flex-1"><button type="button" className="min-h-11 text-left font-medium hover:text-primary" onClick={() => { updateFilters({ product: product.id, q: product.name, stock: '', selection: '' }); document.getElementById('catalog-filters')?.scrollIntoView({ block: 'start' }); }}>{product.name}</button>
                         <p className="text-sm text-muted-foreground">{sales[product.id]} × {formatCurrency(product.price)} = {formatCurrency(Math.round(product.price * 100) * sales[product.id] / 100)}</p></div>
                       <button type="button" className="button-secondary text-destructive" aria-label={`Remover ${product.name} desta venda`} disabled={busy} onClick={() => setSales(previous => { const next = { ...previous }; delete next[product.id]; return next; })}>Remover</button>
-                    </li>)}</ul>
+                    </li>)}{Object.entries(sales).filter(([id, quantity]) => quantity > 0 && !products.some(product => product.id === id)).map(([id, quantity]) => <li key={id} className="flex flex-wrap items-center justify-between gap-3 py-3"><p className="text-sm">{quantity}x {quote?.items.find(item => item.productId === id)?.name || 'Produto'} — indisponível</p><button type="button" className="button-secondary text-destructive" onClick={() => setSales(previous => { const next = { ...previous }; delete next[id]; return next; })}>Remover item indisponível</button></li>)}</ul>
                   </section>}
                   <div className="rounded-xl border border-border bg-muted/30 p-4 sm:p-5 space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -976,7 +1017,7 @@ export default function Admin() {
                         </p>
                       )}
                     </div>
-                    <button className="button-primary" disabled={busy || loading}>{busy ? 'Registrando…' : 'Confirmar vendas'}</button>
+                    <button className="button-primary" disabled={busy || loading || Boolean(quoteToken && (!quote || quote.status !== 'OPEN'))}>{busy ? 'Registrando…' : 'Confirmar vendas'}</button>
                   </div>
                   <p className="text-xs text-muted-foreground">O servidor confere os preços e o estoque dos produtos de catálogo ao confirmar.</p>
                 </form>

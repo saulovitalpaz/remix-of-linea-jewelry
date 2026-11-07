@@ -21,3 +21,7 @@ async function executeUpgrade(prisma: SchemaDatabase, url: URL) {
 export async function upgradeSalesPortal(prisma: SchemaDatabase) {
   await executeUpgrade(prisma, new URL('../prisma/upgrades/20260921_sales_portal.sql', import.meta.url));
 }
+
+export async function upgradeQuotes(prisma: SchemaDatabase) {
+  await executeUpgrade(prisma, new URL('../prisma/upgrades/20261106_quotes.sql', import.meta.url));
+}

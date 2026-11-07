@@ -70,6 +70,20 @@ model DailySales {
   userName         String?
   createdAt        DateTime          @default(now())
   cashTransactions CashTransaction[]
+  quote            Quote?
+}
+
+model Quote {
+  id        String      @id @default(uuid())
+  tokenHash String      @unique
+  items     Json
+  status    String      @default("OPEN")
+  expiresAt DateTime
+  saleId    String?     @unique
+  sale      DailySales? @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  createdAt DateTime    @default(now())
+
+  @@index([expiresAt])
 }
 
 model CashTransaction {

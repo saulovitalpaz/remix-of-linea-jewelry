@@ -5,6 +5,7 @@ import type { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
+import { createHash, randomBytes } from 'node:crypto';
 import { HttpError, text, number, normalizeUsername, roles, salesItems, validateSaleDate, validateTransaction, validateCustomItems } from './validation.js';
 import type { Role } from './validation.js';
 import { isProductImageKey } from './utils/object-storage.js';
@@ -22,6 +23,10 @@ const optionalBoolean = (value: unknown, field: string) => {
   throw new HttpError(400, `${field} inválido.`);
 };
 const monthPattern = /^(\d{4})-(0[1-9]|1[0-2])$/;
+const quoteTokenHash = (value: unknown) => {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(value)) throw new HttpError(404, 'Orçamento não encontrado.');
+  return createHash('sha256').update(value).digest('hex');
+};
 function monthBounds(month: unknown) {
   if (typeof month !== 'string' || !monthPattern.test(month)) throw new HttpError(400, 'Mês inválido. Use AAAA-MM.');
   const [, yearText, monthText] = monthPattern.exec(month)!;
@@ -213,6 +218,41 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
   app.delete('/api/products/:id', ...manage, async (req, res) => {
     await prisma.product.deleteMany({ where: { id: String(req.params.id) } }); res.status(204).end();
   });
+  const quoteAttempts = new Map<string, { count: number; until: number }>();
+  const quoteLimit: RequestHandler = (req, _res, next) => {
+    const now = Date.now();
+    for (const [key, value] of quoteAttempts) if (value.until <= now) quoteAttempts.delete(key);
+    const key = req.ip || 'unknown';
+    if (quoteAttempts.size >= 10_000 && !quoteAttempts.has(key)) throw new HttpError(429, 'Tente novamente mais tarde.');
+    const entry = quoteAttempts.get(key) || { count: 0, until: now + 15 * 60_000 };
+    entry.count += 1;
+    quoteAttempts.set(key, entry);
+    if (entry.count > 40) throw new HttpError(429, 'Muitas solicitações. Tente novamente mais tarde.');
+    next();
+  };
+  app.post('/api/quotes', quoteLimit, async (req, res) => {
+    const items = salesItems(req.body?.items);
+    if (items.length > 50) throw new HttpError(400, 'O carrinho pode ter no máximo 50 produtos.');
+    const snapshot = [];
+    for (const item of items) {
+      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      if (!product) throw new HttpError(404, 'Um produto não está mais disponível.');
+      if (product.stock < item.quantity) throw new HttpError(409, `Estoque insuficiente para ${product.name}. Confira o carrinho.`);
+      snapshot.push({ productId: product.id, name: product.name, price: product.price, quantity: item.quantity });
+    }
+    const token = randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await prisma.quote.deleteMany({ where: { status: 'OPEN', expiresAt: { lte: new Date() } } });
+    await prisma.quote.create({ data: { tokenHash: quoteTokenHash(token), items: snapshot, expiresAt } });
+    res.status(201).json({ token });
+  });
+  app.get('/api/quotes/:token', authenticate, permit(...roles), async (req, res) => {
+    const quote = await prisma.quote.findUnique({ where: { tokenHash: quoteTokenHash(req.params.token) }, include: { sale: true } });
+    if (!quote) throw new HttpError(404, 'Orçamento não encontrado.');
+    if (quote.status !== 'COMPLETED' && quote.expiresAt <= new Date()) throw new HttpError(410, 'Este orçamento expirou.');
+    const sale = quote.sale && { id: quote.sale.id, date: quote.sale.date, totalRevenue: quote.sale.totalRevenue, itemsSold: quote.sale.itemsSold, userName: quote.sale.userName };
+    res.json({ items: quote.items, status: quote.status, expiresAt: quote.expiresAt, sale });
+  });
   app.post('/api/sales/close-day', authenticate, permit(...roles), async (req, res) => {
     const user = res.locals.user;
     const customItems = validateCustomItems(req.body?.customItems);
@@ -223,7 +263,12 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
     const notes = req.body?.notes ? text(req.body.notes, 'Observações', 2000) : '';
     const saleDate = validateSaleDate(req.body?.date, user.role as Role);
     const paymentMethod = req.body?.paymentMethod ? text(req.body.paymentMethod, 'Forma de pagamento', 50) : null;
+    const tokenHash = req.body?.quoteToken === undefined ? null : quoteTokenHash(req.body.quoteToken);
     const sale = await prisma.$transaction(async tx => {
+      if (tokenHash) {
+        const claim = await tx.quote.updateMany({ where: { tokenHash, status: 'OPEN', expiresAt: { gt: new Date() } }, data: { status: 'PROCESSING' } });
+        if (!claim.count) throw new HttpError(409, 'Este orçamento expirou ou já foi concluído.');
+      }
       let cents = 0; let itemsSold = 0;
       const soldDetails: string[] = [];
       for (const item of items) {
@@ -265,6 +310,7 @@ export function createApp({ prisma, jwtSecret, uploadImage, readImage }: Depende
           dailySalesId: createdSale.id,
         }
       });
+      if (tokenHash) await tx.quote.update({ where: { tokenHash }, data: { status: 'COMPLETED', saleId: createdSale.id } });
       return createdSale;
     });
     res.status(201).json(sale);

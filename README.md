@@ -2,6 +2,10 @@
 
 Vitrine React 19/Vite e API Express 5/Prisma/PostgreSQL. O frontend ativo está em `src/`; `app/` e arquivos Next.js são remanescentes inativos, preservados fora do build. As compras são combinadas pelo WhatsApp; o painel `/admin` registra produtos e vendas internas, sem checkout de pagamento.
 
+A sacola da vitrine funciona sem login e permanece no armazenamento do navegador por 24 horas a partir da primeira seleção. O visitante pode enviar os itens pelo WhatsApp para tirar dúvidas ou solicitar a compra. Na solicitação de compra, a API cria um orçamento válido por 24 horas e a mensagem inclui um link para a equipe. O link solicita login e preenche o registro de venda; somente a confirmação da equipe movimenta estoque e caixa. Preços e disponibilidade são conferidos novamente nessa etapa: o orçamento não reserva estoque. Com armazenamento do navegador desabilitado, a sacola permanece apenas na aba atual.
+
+O orçamento não coleta dados pessoais. Sua referência é aleatória e apenas um hash é salvo no banco; a leitura exige autenticação da equipe. O lançamento associa orçamento e venda na mesma transação e impede uma segunda confirmação do mesmo orçamento. Orçamentos abertos expirados são removidos ao criar novos; os concluídos mantêm a referência à venda.
+
 ## Desenvolvimento local
 
 Requer Node.js 22 ou superior. Na raiz, execute `npm ci` e `npm run dev` para abrir o Vite em `http://localhost:5173`. Em `backend/`, execute `npm ci`, configure um `.env` local conforme `.env.example` e execute `npm run dev`. A API usa a porta 3001; o Vite encaminha `/api` para ela. Use um PostgreSQL local já provisionado para testar persistência.
@@ -39,6 +43,8 @@ Respostas são JSON; erros usam `{ "error": "mensagem" }`. Endpoints protegidos 
 | PUT `/api/products/:id` | ADMIN/MANAGER; mesmos campos completos |
 | DELETE `/api/products/:id` | ADMIN/MANAGER |
 | POST `/api/sales/close-day` | Todos os perfis; `{ itemsSoldData: [{ productId, quantity }], notes? }` |
+| POST `/api/quotes` | Público; `{ items: [{ productId, quantity }] }`; valida estoque e retorna referência aleatória |
+| GET `/api/quotes/:token` | Equipe autenticada; itens do orçamento e eventual venda registrada |
 | GET `/api/popup/active` | Público; campanha ativa ou null |
 | GET `/api/popup` | ADMIN; última campanha, inclusive inativa |
 | POST `/api/popup` | ADMIN; multipart com imagem |
@@ -52,6 +58,8 @@ Respostas são JSON; erros usam `{ "error": "mensagem" }`. Endpoints protegidos 
 | GET `/api/health` | Saúde da API e conexão PostgreSQL |
 
 Produtos aceitam JSON ou multipart; uploads usam o campo `image`, JPEG/PNG/WebP e limite de 5 MB. Preço deve ser positivo com até duas casas decimais; estoque e quantidade são inteiros. O registro de venda calcula valores com preços do banco e atualiza estoque em transação. O admin pode marcar `onOffer` no formulário: a marcação aparece somente no catálogo autenticado e não altera preços ou a homepage.
+
+`POST /api/sales/close-day` aceita `quoteToken` opcional para vincular e concluir um orçamento aberto. A API rejeita referências expiradas ou já concluídas, inclusive em tentativas concorrentes. O limite de criação de orçamentos, como o de login, é por processo; múltiplas réplicas exigem um limitador compartilhado.
 
 O vendedor acompanha vendas próprias do dia e a meta pessoal do mês no fuso `America/Sao_Paulo`. A conquista da meta é visual, sem cálculo de comissão. Os filtros de catálogo combinam busca por nome/categoria, estoque, destaques e ofertas; o resumo da venda mantém visíveis todos os itens selecionados. Fotos de referência abrem dentro do painel. O dashboard admin mostra o ranking acumulado por unidades vendidas.
 

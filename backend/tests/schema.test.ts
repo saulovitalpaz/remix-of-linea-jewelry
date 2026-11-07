@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { upgradeCashFlow, upgradeSalesPortal } from '../src/schema.js';
+import { upgradeCashFlow, upgradeSalesPortal, upgradeQuotes } from '../src/schema.js';
 
 test('cash flow upgrade prepares sales attribution and cash table in one transaction', async () => {
   const statements: string[] = [];
@@ -28,4 +28,16 @@ test('sales portal upgrade adds private offers and monthly goals idempotently', 
   assert.ok(statements.some(sql => sql.includes('CREATE TABLE IF NOT EXISTS "MonthlySalesGoal"')));
   assert.ok(statements.some(sql => sql.includes('MonthlySalesGoal_userId_month_key')));
   assert.ok(statements.some(sql => sql.includes('ON DELETE CASCADE')));
+});
+
+test('quote upgrade adds a unique token hash and links each quote to one sale', async () => {
+  const statements: string[] = [];
+  await upgradeQuotes({
+    $transaction: async (run: (tx: { $executeRawUnsafe: (sql: string) => Promise<number> }) => Promise<void>) =>
+      run({ $executeRawUnsafe: async (sql: string) => { statements.push(sql); return 0; } }),
+  });
+  assert.ok(statements.some(sql => sql.includes('CREATE TABLE IF NOT EXISTS "Quote"')));
+  assert.ok(statements.some(sql => sql.includes('Quote_tokenHash_key')));
+  assert.ok(statements.some(sql => sql.includes('Quote_saleId_key')));
+  assert.ok(statements.some(sql => sql.includes('REFERENCES "DailySales"')));
 });

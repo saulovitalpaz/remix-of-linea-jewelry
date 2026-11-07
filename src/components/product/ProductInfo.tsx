@@ -12,6 +12,7 @@ import {
 import { Minus, Plus } from "lucide-react";
 import { Product, CATEGORIES } from "../../types/product";
 import { formatCurrency } from '@/lib/format';
+import { useCart } from '@/context/cart-context';
 
 interface ProductInfoProps {
   product: Product;
@@ -19,14 +20,16 @@ interface ProductInfoProps {
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
   const [quantity, setQuantity] = useState(1);
+  const [cartError, setCartError] = useState('');
+  const { add } = useCart();
 
   const incrementQuantity = () => setQuantity(prev => Math.min(product.stock, prev + 1));
   const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
 
-  const buyViaWhatsApp = () => {
+  const addToCart = () => {
     if (product.stock < 1 || quantity > product.stock) return;
-    const message = encodeURIComponent(`Olá! Gostaria de encomendar ${quantity}x ${product.name} (${formatCurrency(product.price)} cada). Total: ${formatCurrency(product.price * quantity)}. ${window.location.href}`);
-    window.open(`https://wa.me/5577988590306?text=${message}`, '_blank', 'noopener,noreferrer');
+    if (!add(product, quantity)) setCartError('A sacola pode ter até 50 produtos.');
+    else setCartError('');
   };
 
   return (
@@ -106,15 +109,15 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
 
         <div className="fixed bottom-0 left-0 w-full p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 transition-all md:static md:p-0 md:bg-transparent md:border-none md:shadow-none md:z-auto flex flex-col gap-3">
           <Button
-            onClick={buyViaWhatsApp}
+            onClick={addToCart}
             disabled={product.stock === 0}
             className="w-full h-14 bg-[#16763b] text-white hover:bg-[#105c2d] font-bold rounded-2xl flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-            {product.stock > 0 ? 'Comprar pelo WhatsApp' : 'Produto esgotado'}
+            {product.stock > 0 ? 'Adicionar à sacola' : 'Produto esgotado'}
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">Confirme disponibilidade e entrega com nossa equipe.</p>
+          {cartError && <p className="text-center text-xs text-destructive" role="alert">{cartError}</p>}
         </div>
       </div>
 

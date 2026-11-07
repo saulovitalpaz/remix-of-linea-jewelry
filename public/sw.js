@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chique-admin-pwa-v2';
+const CACHE_NAME = 'chique-admin-pwa-v3';
 const STATIC_ASSETS = [
   '/',
   '/admin',
@@ -33,6 +33,13 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   // Ignore non-GET or API requests
   if (request.method !== 'GET' || request.url.includes('/api/')) return;
+
+  // Quote links contain a private reference; don't store the URL in the PWA cache.
+  const url = new URL(request.url);
+  if (url.pathname === '/admin' && url.searchParams.has('quote')) {
+    event.respondWith(fetch(request).catch(() => caches.match('/admin')));
+    return;
+  }
 
   event.respondWith(
     fetch(request)
